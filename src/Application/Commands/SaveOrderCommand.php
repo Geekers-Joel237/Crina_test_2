@@ -2,17 +2,20 @@
 
 namespace App\Application\Commands;
 
-readonly class SaveOrderCommand
+class SaveOrderCommand
 {
+
+    public ?string $orderId;
 
     /**
      * @param string $fruitRef
      * @param int $orderedQuantity
      */
     public function __construct(
-        public string $fruitRef,
-        public int $orderedQuantity
+        readonly public string $fruitRef,
+        readonly public int $orderedQuantity
     )
     {
+        $this->orderId = null;
     }
 }
