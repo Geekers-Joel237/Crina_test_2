@@ -5,6 +5,7 @@ namespace Tests\Units\Order;
 use App\Application\Commands\SaveOrderCommand;
 use App\Application\Entities\Order;
 use App\Application\Entities\OrderRepository;
+use App\Application\Exceptions\InvalidCommandException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\UseCases\SaveOrderHandler;
 use App\Application\ValueObjects\FruitReference;
@@ -77,6 +78,20 @@ class SaveOrderTest extends TestCase
         $handler = new SaveOrderHandler($this->repository);
 
         $this->expectException(NotFoundOrderException::class);
+        $handler->handle($command);
+    }
+
+    /**
+     * @return void
+     * @throws NotFoundOrderException
+     */
+    public function test_can_throw_invalid_command_exception()
+    {
+        $command = new SaveOrderCommand('', 0);
+
+        $handler = new SaveOrderHandler($this->repository);
+
+        $this->expectException(InvalidCommandException::class);
         $handler->handle($command);
     }
 
