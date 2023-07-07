@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Entities;
+namespace App\Application\Entities\Order;
 
 use App\Application\ValueObjects\Id;
 

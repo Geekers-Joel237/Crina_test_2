@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Entities;
+namespace App\Application\Entities\Order;
 
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderElement;
@@ -45,5 +45,13 @@ class Order
     private function addElementToOrder(OrderElement $orderElement): void
     {
         $this->orderElements[] = $orderElement;
+    }
+
+    /**
+     * @return OrderElement[]
+     */
+    public function orderElements(): array
+    {
+        return $this->orderElements;
     }
 }

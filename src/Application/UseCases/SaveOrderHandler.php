@@ -3,10 +3,12 @@
 namespace App\Application\UseCases;
 
 use App\Application\Commands\SaveOrderCommand;
-use App\Application\Entities\Order;
-use App\Application\Entities\OrderRepository;
+use App\Application\Entities\Order\Order;
+use App\Application\Entities\Order\OrderRepository;
+use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\Responses\SaveOrderResponse;
+use App\Application\Services\GetFruitByReferenceService;
 use App\Application\ValueObjects\FruitReference;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderedQuantity;
@@ -16,24 +18,30 @@ readonly class SaveOrderHandler
 {
 
 
-    public function __construct(private OrderRepository $repository)
+    public function __construct(
+        private OrderRepository $repository,
+        private GetFruitByReferenceService $verifyIfFruitReferenceExistsOrThrowNotFoundException
+    )
     {
     }
 
     /**
      * @throws NotFoundOrderException
+     * @throws NotFoundFruitReferenceException
      */
     public function handle(SaveOrderCommand $command): SaveOrderResponse
     {
         $response = new SaveOrderResponse();
 
         $orderId = $command->orderId ? new Id($command->orderId) : null;
+        $fruitRef = new FruitReference($command->fruitRef);
         $orderElement = new OrderElement(
-            reference: new FruitReference($command->fruitRef),
+            reference: $fruitRef,
             orderedQuantity: new OrderedQuantity($command->orderedQuantity)
         );
 
         $this->verifyIfOrderExistsOrThrowNotFoundException($orderId);
+        $this->verifyIfFruitReferenceExistsOrThrowNotFoundException->execute($fruitRef);
 
         $order = Order::create(
             orderElement: $orderElement,

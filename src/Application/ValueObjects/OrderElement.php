@@ -11,4 +11,9 @@ class OrderElement
     )
     {
     }
+
+    public function reference(): FruitReference
+    {
+        return $this->reference;
+    }
 }

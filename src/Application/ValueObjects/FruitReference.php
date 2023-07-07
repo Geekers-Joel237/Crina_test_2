@@ -26,4 +26,9 @@ readonly class FruitReference
             throw new InvalidCommandException("La référence est invalide !");
         }
     }
+
+    public function value(): string
+    {
+        return $this->value;
+    }
 }

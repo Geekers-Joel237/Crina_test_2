@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Persistence\Repositories;
+namespace App\Persistence\Repositories\Order;
 
-use App\Application\Entities\Order;
-use App\Application\Entities\OrderRepository;
+use App\Application\Entities\Order\Order;
+use App\Application\Entities\Order\OrderRepository;
 use App\Application\ValueObjects\Id;
 
 class InMemoryOrderRepository implements OrderRepository
