@@ -2,10 +2,13 @@
 
 namespace App\Application\Commands;
 
+use App\Application\Enums\OrderAction;
+
 class SaveOrderCommand
 {
 
     public ?string $orderId;
+    public ?int $action;
 
     /**
      * @param string $fruitRef
@@ -17,5 +20,6 @@ class SaveOrderCommand
     )
     {
         $this->orderId = null;
+        $this->action = OrderAction::ADD_TO_ORDER->value;
     }
 }

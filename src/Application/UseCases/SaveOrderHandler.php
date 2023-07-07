@@ -5,6 +5,7 @@ namespace App\Application\UseCases;
 use App\Application\Commands\SaveOrderCommand;
 use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
+use App\Application\Enums\OrderAction;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\Responses\SaveOrderResponse;
@@ -19,7 +20,7 @@ readonly class SaveOrderHandler
 
 
     public function __construct(
-        private OrderRepository $repository,
+        private OrderRepository            $repository,
         private GetFruitByReferenceService $verifyIfFruitReferenceExistsOrThrowNotFoundException
     )
     {
@@ -40,34 +41,40 @@ readonly class SaveOrderHandler
             orderedQuantity: new OrderedQuantity($command->orderedQuantity)
         );
 
-        $this->verifyIfOrderExistsOrThrowNotFoundException($orderId);
         $this->verifyIfFruitReferenceExistsOrThrowNotFoundException->execute($fruitRef);
 
-        $order = Order::create(
-            orderElement: $orderElement,
-            id: $orderId
-        );
+        if (!$orderId) {
+            $order = Order::create(
+                orderElement: $orderElement,
+                id: $orderId
+            );
+        } else {
+            $action = OrderAction::in($command->action);
+            $order = $this->getOrderOrThrowNotFoundException($orderId);
+            $order->changeElements($orderElement, $action);
+        }
 
         $this->repository->save($order);
 
         $response->isSaved = true;
         $response->orderId = $order->id()->value();
+        $response->orderStatus = $order->status()->value;
 
         return $response;
     }
 
     /**
      * @param Id|null $orderId
-     * @return void
+     * @return Order
      * @throws NotFoundOrderException
      */
-    private function verifyIfOrderExistsOrThrowNotFoundException(?Id $orderId): void
+    private function getOrderOrThrowNotFoundException(?Id $orderId): Order
     {
-        if ($orderId) {
-            $order = $this->repository->byId($orderId);
-            if (!$order) {
-                throw new NotFoundOrderException("Cette commande n'existe pas !");
-            }
+        $order = $this->repository->byId($orderId);
+        if (!$order) {
+            throw new NotFoundOrderException("Cette commande n'existe pas !");
         }
+
+        return $order;
     }
 }

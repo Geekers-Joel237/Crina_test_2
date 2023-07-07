@@ -6,6 +6,8 @@ use App\Application\Commands\SaveOrderCommand;
 use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
+use App\Application\Enums\OrderAction;
+use App\Application\Enums\OrderStatus;
 use App\Application\Exceptions\InvalidCommandException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderException;
@@ -52,6 +54,7 @@ class SaveOrderTest extends TestCase
         //Then
         $this->assertTrue($response->isSaved);
         $this->assertNotNull($response->orderId);
+        $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
     }
 
     /**
@@ -73,13 +76,14 @@ class SaveOrderTest extends TestCase
         $this->assertTrue($response->isSaved);
         $this->assertNotNull($response->orderId);
         $this->assertEquals($command->orderId, $response->orderId);
+        $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
     }
 
     /**
      * @throws NotFoundOrderException
      * @throws NotFoundFruitReferenceException
      */
-    public function test_can_remove_element_from_existing_order()
+    public function test_can_destroy_order_while_removing_last_element_from_existing_order()
     {
         $existingOrder = $this->buildOrderSUT();
         $command = new SaveOrderCommand(
@@ -87,11 +91,13 @@ class SaveOrderTest extends TestCase
             10
         );
         $command->orderId = $existingOrder->id()->value();
+        $command->action = OrderAction::REMOVE_FROM_ORDER->value;
 
         $handler = $this->createSaveOrderHandler();
         $response = $handler->handle($command);
 
         $this->assertTrue($response->isSaved);
+        $this->assertEquals(OrderStatus::IS_DESTROYED->value, $response->orderStatus);
         $this->assertNotNull($response->orderId);
         $this->assertEquals($command->orderId, $response->orderId);
     }
