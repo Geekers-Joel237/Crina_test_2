@@ -9,6 +9,7 @@ use App\Application\Entities\Order\OrderRepository;
 use App\Application\Enums\MeanPayment;
 use App\Application\Enums\Currency;
 use App\Application\Enums\OrderStatus;
+use App\Application\Exceptions\NotAvailableFruitQuantityInStock;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\Responses\ValidateOrderResponse;
@@ -32,7 +33,9 @@ readonly class ValidateOrderHandle
 
 
     /**
-     * @throws NotFoundFruitReferenceException
+     * @param ValidateOrderCommand $command
+     * @return ValidateOrderResponse
+     * @throws NotAvailableFruitQuantityInStock
      * @throws NotFoundOrderException
      */
     public function handle(ValidateOrderCommand $command): ValidateOrderResponse
@@ -55,13 +58,13 @@ readonly class ValidateOrderHandle
     /**
      * @param OrderElement[] $orderElements
      * @return void
-     * @throws NotFoundFruitReferenceException
+     * @throws NotAvailableFruitQuantityInStock
      */
     private function updateStockWithIncomeOrder(array $orderElements): void
     {
         foreach ($orderElements as $orderElement){
-            $fruitInStock = $this->getFruitByReferenceService->execute($orderElement->reference());
-            $this->fruitRepository->delete($fruitInStock->id());
+            $this->checkIfQuantityIsAvailableOrThrowNotAvailableFruitQuantityInStock($orderElement);
+            $this->removeOtherElementRelativeToQuantityInStock($orderElement);
         }
 
     }
@@ -69,8 +72,7 @@ readonly class ValidateOrderHandle
     /**
      * @param Order|null $order
      * @return void
-     * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException
+     * @throws NotFoundOrderException|NotAvailableFruitQuantityInStock
      */
     public function IfOrderExistValidatedItOrThrowNotFoundException(?Order $order): void
     {
@@ -81,6 +83,30 @@ readonly class ValidateOrderHandle
         }
         throw new NotFoundOrderException("Cette commande n'existe pas");
 
+    }
+
+    /**
+     * @throws NotAvailableFruitQuantityInStock
+     */
+    private function checkIfQuantityIsAvailableOrThrowNotAvailableFruitQuantityInStock(OrderElement $orderElement): void
+    {
+        $fruitsInStock = $this->fruitRepository->allByReference($orderElement->reference());
+        if (count($fruitsInStock) <= $orderElement->orderedQuantity()->value()){
+            throw new NotAvailableFruitQuantityInStock("Nous n'avons plus cette quantite en stock pour ce fruit !");
+        }
+    }
+
+    private function removeOtherElementRelativeToQuantityInStock(OrderElement $orderElement): void
+    {
+        $fruitsToRemove = array_slice(
+            $this->fruitRepository->allByReference($orderElement->reference()),
+            0,
+            $orderElement->orderedQuantity()->value()
+        );
+
+        foreach ($fruitsToRemove as $fruit){
+            $this->fruitRepository->delete($fruit->id());
+        }
     }
 
 }

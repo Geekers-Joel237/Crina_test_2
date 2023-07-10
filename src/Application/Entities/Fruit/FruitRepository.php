@@ -14,4 +14,6 @@ interface FruitRepository
     public function byReference(FruitReference $fruitRef): ?Fruit;
 
     public function delete(Id $fruitId);
+
+    public function allByReference(FruitReference $fruitReference): array;
 }
