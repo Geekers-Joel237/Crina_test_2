@@ -6,8 +6,8 @@ class OrderElement
 {
 
     public function __construct(
-        private FruitReference $reference,
-        private OrderedQuantity $orderedQuantity
+        private readonly FruitReference $reference,
+        private OrderedQuantity         $orderedQuantity
     )
     {
     }

@@ -47,11 +47,6 @@ class Order
         return $this->id;
     }
 
-    private function addElementToOrder(OrderElement $orderElement): void
-    {
-        $this->orderElements[] = $orderElement;
-    }
-
     /**
      * @return OrderElement[]
      */
@@ -60,15 +55,9 @@ class Order
         return $this->orderElements;
     }
 
-    private function removeElementFromOrder(OrderElement $orderElement): void
+    public function status(): OrderStatus
     {
-        $this->orderElements = array_values(array_filter(
-            $this->orderElements,
-            fn(OrderElement $e) => $e->reference()->value() !== $orderElement->reference()->value()
-        ));
-        if (count($this->orderElements) === 0) {
-            $this->changeStatus(OrderStatus::IS_DESTROYED);
-        }
+        return $this->status;
     }
 
     /**
@@ -93,9 +82,21 @@ class Order
         $this->removeElementFromOrder($orderElement);
     }
 
-    public function status(): OrderStatus
+    public function setIsValidated(): void
     {
-        return $this->status;
+        $this->resetOrderElementsInOrder();
+        $this->status = OrderStatus::IS_VALIDATED;
+    }
+
+    private function removeElementFromOrder(OrderElement $orderElement): void
+    {
+        $this->orderElements = array_values(array_filter(
+            $this->orderElements,
+            fn(OrderElement $e) => $e->reference()->value() !== $orderElement->reference()->value()
+        ));
+        if (count($this->orderElements) === 0) {
+            $this->changeStatus(OrderStatus::IS_DESTROYED);
+        }
     }
 
     private function changeStatus(OrderStatus $status): void
@@ -127,6 +128,11 @@ class Order
        $this->orderElements[] = $existingOrderElement;
     }
 
+    private function addElementToOrder(OrderElement $orderElement): void
+    {
+        $this->orderElements[] = $orderElement;
+    }
+
     /**
      * @throws NotFoundOrderElementException
      */
@@ -143,4 +149,10 @@ class Order
             throw new NotFoundOrderElementException();
         }
     }
+
+    private function resetOrderElementsInOrder(): void
+    {
+        $this->orderElements = [];
+    }
+
 }
