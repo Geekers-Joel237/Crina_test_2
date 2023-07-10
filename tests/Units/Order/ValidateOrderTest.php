@@ -80,7 +80,7 @@ class ValidateOrderTest extends TestCase
     public function test_can_throw_not_found_order_exception()
     {
         $command = new ValidateOrderCommand(
-            orderId: '001',
+            orderId: '002',
             currency: 1,
             meanPayment: 1
         );
