@@ -4,6 +4,7 @@ namespace App\Application\UseCases;
 
 use App\Application\Commands\ValidateOrderCommand;
 use App\Application\Entities\Fruit\FruitRepository;
+use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
 use App\Application\Enums\MeanPayment;
 use App\Application\Enums\Currency;
@@ -32,6 +33,7 @@ readonly class ValidateOrderHandle
 
     /**
      * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderException
      */
     public function handle(ValidateOrderCommand $command): ValidateOrderResponse
     {
@@ -42,8 +44,7 @@ readonly class ValidateOrderHandle
         $meanPayment = MeanPayment::in($command->meanPayment());
 
         $order = $this->orderRepository->byId($orderId);
-        $this->updateStockWithIncomeOrder($order->orderElements());
-        $order?->setIsValidated();
+        $this->IfOrderExistValidatedItOrThrowNotFoundException($order);
 
         if (OrderStatus::IS_VALIDATED->value === $order->status()->value) {
             $response->isValidated = true;
@@ -62,6 +63,23 @@ readonly class ValidateOrderHandle
             $fruitInStock = $this->getFruitByReferenceService->execute($orderElement->reference());
             $this->fruitRepository->delete($fruitInStock->id());
         }
+
+    }
+
+    /**
+     * @param Order|null $order
+     * @return void
+     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderException
+     */
+    public function IfOrderExistValidatedItOrThrowNotFoundException(?Order $order): void
+    {
+        if ($order) {
+            $this->updateStockWithIncomeOrder($order->orderElements());
+            $order->setIsValidated();
+            return;
+        }
+        throw new NotFoundOrderException("Cette commande n'existe pas");
 
     }
 

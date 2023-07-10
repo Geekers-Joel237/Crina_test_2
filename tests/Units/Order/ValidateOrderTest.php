@@ -36,6 +36,7 @@ class ValidateOrderTest extends TestCase
 
     /**
      * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderException
      */
     public function test_can_validate_Order()
     {
@@ -73,6 +74,27 @@ class ValidateOrderTest extends TestCase
         $this->assertCount(count($existingFruitsBeforeOrder) - count($existingOrder->orderElements()) ,$existingFruitsAfterOrder);
     }
 
+    /**
+     * @throws NotFoundFruitReferenceException
+     */
+    public function test_can_throw_not_found_order_exception()
+    {
+        $command = new ValidateOrderCommand(
+            orderId: '001',
+            currency: 1,
+            meanPayment: 1
+        );
+
+        $handle = new ValidateOrderHandle(
+            $this->orderRepository,
+            $this->getFruitByReferenceService,
+            $this->fruitRepository
+        );
+
+        $this->expectException(NotFoundOrderException::class);
+        $handle->handle($command);
+
+    }
 
 
 }
