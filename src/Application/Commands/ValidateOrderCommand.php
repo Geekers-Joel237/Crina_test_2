@@ -2,18 +2,29 @@
 
 namespace App\Application\Commands;
 
-use App\Application\Entities\Order\Order;
 
 readonly class ValidateOrderCommand
 {
     public function __construct(
-        private Order $order
+        private string $orderId,
+        private int    $currency,
+        private int    $meanPayment
     )
     {
     }
 
-    public function order(): Order
+    public function orderId(): string
     {
-        return $this->order;
+        return $this->orderId;
+    }
+
+    public function currency() : int
+    {
+        return $this->currency;
+    }
+
+    public function meanPayment(): int
+    {
+        return $this->meanPayment;
     }
 }

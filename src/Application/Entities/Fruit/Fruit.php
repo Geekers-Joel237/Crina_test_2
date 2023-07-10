@@ -27,4 +27,9 @@ class Fruit
     {
         return $this->reference;
     }
+
+    public function id(): Id
+    {
+        return  $this->id;
+    }
 }

@@ -84,7 +84,6 @@ class Order
 
     public function setIsValidated(): void
     {
-        $this->resetOrderElementsInOrder();
         $this->status = OrderStatus::IS_VALIDATED;
     }
 
@@ -150,9 +149,5 @@ class Order
         }
     }
 
-    private function resetOrderElementsInOrder(): void
-    {
-        $this->orderElements = [];
-    }
 
 }
