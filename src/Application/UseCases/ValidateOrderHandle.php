@@ -42,7 +42,7 @@ readonly class ValidateOrderHandle
         $meanPayment = MeanPayment::in($command->meanPayment());
 
         $order = $this->orderRepository->byId($orderId);
-        $this->removeOrderElementsInStock($order->orderElements());
+        $this->updateStockWithIncomeOrder($order->orderElements());
         $order?->setIsValidated();
 
         if (OrderStatus::IS_VALIDATED->value === $order->status()->value) {
@@ -56,7 +56,7 @@ readonly class ValidateOrderHandle
      * @return void
      * @throws NotFoundFruitReferenceException
      */
-    private function removeOrderElementsInStock(array $orderElements): void
+    private function updateStockWithIncomeOrder(array $orderElements): void
     {
         foreach ($orderElements as $orderElement){
             $fruitInStock = $this->getFruitByReferenceService->execute($orderElement->reference());

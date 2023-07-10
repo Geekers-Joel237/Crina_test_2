@@ -7,6 +7,7 @@ use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
 use App\Application\Enums\OrderStatus;
+use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\Services\GetFruitByReferenceService;
 use App\Application\UseCases\ValidateOrderHandle;
@@ -33,6 +34,9 @@ class ValidateOrderTest extends TestCase
     }
 
 
+    /**
+     * @throws NotFoundFruitReferenceException
+     */
     public function test_can_validate_Order()
     {
 
