@@ -4,6 +4,7 @@ namespace App\Application\Entities\Order;
 
 use App\Application\Enums\OrderAction;
 use App\Application\Enums\OrderStatus;
+use App\Application\Exceptions\NotFoundOrderElementException;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderElement;
 
@@ -70,7 +71,10 @@ class Order
         }
     }
 
-    public function changeElements(
+    /**
+     * @throws NotFoundOrderElementException
+     */
+    public function updateOrder(
         OrderElement $orderElement,
         OrderAction  $action
     ): void
@@ -85,7 +89,7 @@ class Order
             return;
         }
 
-        //TODO : check if orderElement exist before remove it
+        $this->checkIfOrderElementAlreadyExistInOrderOrThrowNotFoundOrderElementException($orderElement);
         $this->removeElementFromOrder($orderElement);
     }
 
@@ -121,5 +125,22 @@ class Order
        );
        $this->orderElements = $newOrder;
        $this->orderElements[] = $existingOrderElement;
+    }
+
+    /**
+     * @throws NotFoundOrderElementException
+     */
+    private function checkIfOrderElementAlreadyExistInOrderOrThrowNotFoundOrderElementException(OrderElement $orderElement): void
+    {
+        $retrieveOrderElement =array_values(
+            array_filter(
+                $this->orderElements,fn(OrderElement $element)
+            => $element->reference()->value() === $orderElement->reference()->value()
+            )
+        );
+
+        if (empty($retrieveOrderElement)){
+            throw new NotFoundOrderElementException();
+        }
     }
 }

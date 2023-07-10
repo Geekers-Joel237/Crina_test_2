@@ -51,7 +51,7 @@ readonly class SaveOrderHandler
         } else {
             $action = OrderAction::in($command->action);
             $order = $this->getOrderOrThrowNotFoundException($orderId);
-            $order->changeElements($orderElement, $action);
+            $order->updateOrder($orderElement, $action);
         }
 
         $this->repository->save($order);

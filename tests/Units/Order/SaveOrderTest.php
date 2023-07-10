@@ -3,6 +3,7 @@
 namespace Tests\Units\Order;
 
 use App\Application\Commands\SaveOrderCommand;
+use App\Application\Entities\Fruit\Fruit;
 use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
@@ -10,6 +11,7 @@ use App\Application\Enums\OrderAction;
 use App\Application\Enums\OrderStatus;
 use App\Application\Exceptions\InvalidCommandException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
+use App\Application\Exceptions\NotFoundOrderElementException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\Services\GetFruitByReferenceService;
 use App\Application\UseCases\SaveOrderHandler;
@@ -146,6 +148,40 @@ class SaveOrderTest extends TestCase
         $handler->handle($command);
     }
 
+    /**
+     * @throws NotFoundOrderException
+     * @throws NotFoundFruitReferenceException
+     */
+    public function test_can_throw_order_element_not_found_exception()
+    {
+        $orderElement1 = new OrderElement(
+            reference: new FruitReference('Ref01'),
+            orderedQuantity: new OrderedQuantity(10)
+        );
+        $orderElement2 = new OrderElement(
+            reference: new FruitReference('Ref02'),
+            orderedQuantity: new OrderedQuantity(20)
+        );
+        $fruit = Fruit::create(new Id('002'), $orderElement2->reference());
+        $this->fruitRepository->fruits[] = $fruit;
+        $existingOrder = Order::create(
+            orderElement: $orderElement1,
+            id: new Id('001')
+        );
+        $this->orderRepository->save($existingOrder);
+
+        $command = new SaveOrderCommand(
+            $orderElement2->reference()->value(),
+            10
+        );
+        $command->orderId = $existingOrder->id()->value();
+        $command->action = OrderAction::REMOVE_FROM_ORDER->value;
+
+        $handler = $this->createSaveOrderHandler();
+        $this->expectException(NotFoundOrderElementException::class);
+        $handler->handle($command);
+
+    }
     /**
      * @return void
      * @throws NotFoundFruitReferenceException
