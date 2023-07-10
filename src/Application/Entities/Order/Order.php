@@ -76,9 +76,16 @@ class Order
     ): void
     {
         if ($action === OrderAction::ADD_TO_ORDER) {
+            $existingOrderElement = $this->checkIfOrderElementAlreadyExistInOrderBeforeKnowIfItsAddOrUpdateCase($orderElement);
+            if ($existingOrderElement){
+                $this->changeElementQuantityToOrder($existingOrderElement, $orderElement);
+                return;
+            }
             $this->addElementToOrder($orderElement);
             return;
         }
+
+        //TODO : check if orderElement exist before remove it
         $this->removeElementFromOrder($orderElement);
     }
 
@@ -90,5 +97,29 @@ class Order
     private function changeStatus(OrderStatus $status): void
     {
         $this->status = $status;
+    }
+
+    private function checkIfOrderElementAlreadyExistInOrderBeforeKnowIfItsAddOrUpdateCase(OrderElement $orderElement): ?OrderElement
+    {
+        $retrieveOrderElement =
+            array_filter(
+                $this->orderElements,fn(OrderElement $element)
+                => $element->reference()->value() === $orderElement->reference()->value()
+            );
+        $key = key($retrieveOrderElement);
+        return count($retrieveOrderElement) > 0 ? $retrieveOrderElement[$key] : null;
+    }
+
+    private function changeElementQuantityToOrder(OrderElement $existingOrderElement, OrderElement $orderElement): void
+    {
+       $existingOrderElement->orderedQuantity()->changeQuantity($orderElement->orderedQuantity()->value());
+       $newOrder = array_values(
+           array_filter(
+               $this->orderElements,
+               fn(OrderElement $element) => $element->reference()->value() !== $existingOrderElement->reference()->value()
+           )
+       );
+       $this->orderElements = $newOrder;
+       $this->orderElements[] = $existingOrderElement;
     }
 }

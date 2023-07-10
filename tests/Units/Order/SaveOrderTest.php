@@ -24,13 +24,13 @@ use PHPUnit\Framework\TestCase;
 class SaveOrderTest extends TestCase
 {
 
-    private OrderRepository $repository;
+    private OrderRepository $orderRepository;
     private FruitRepository $fruitRepository;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->repository = new InMemoryOrderRepository();
+        $this->orderRepository = new InMemoryOrderRepository();
         $this->fruitRepository = new InMemoryFruitRepository();
     }
 
@@ -77,6 +77,30 @@ class SaveOrderTest extends TestCase
         $this->assertNotNull($response->orderId);
         $this->assertEquals($command->orderId, $response->orderId);
         $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
+    }
+
+    /**
+     * @throws NotFoundOrderException
+     * @throws NotFoundFruitReferenceException
+     */
+    public function test_can_update_order_when_element_is_already_present()
+    {
+        $existingOrder = $this->buildOrderSUT();
+        $command = new SaveOrderCommand(
+            $existingOrder->orderElements()[0]->reference()->value(),
+            15
+        );
+        $command->orderId = $existingOrder->id()->value();
+
+        $handler = $this->createSaveOrderHandler();
+        $response = $handler->handle($command);
+
+        $retrieveOrder = $this->orderRepository->byId(new Id($response->orderId));
+        $this->assertTrue($response->isSaved);
+        $this->assertNotNull($response->orderId);
+        $this->assertEquals($command->orderId, $response->orderId);
+        $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
+        $this->assertCount(count($existingOrder->orderElements()),$retrieveOrder->orderElements());
     }
 
     /**
@@ -182,7 +206,7 @@ class SaveOrderTest extends TestCase
             id: new Id('001')
         );
 
-        $this->repository->save($existingOrder);
+        $this->orderRepository->save($existingOrder);
 
         return $existingOrder;
     }
@@ -195,7 +219,7 @@ class SaveOrderTest extends TestCase
         $getFruitByReferenceService = new GetFruitByReferenceService($this->fruitRepository);
 
         return new SaveOrderHandler(
-            $this->repository,
+            $this->orderRepository,
             $getFruitByReferenceService
         );
     }

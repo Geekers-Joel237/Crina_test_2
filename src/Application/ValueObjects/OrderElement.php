@@ -16,4 +16,14 @@ class OrderElement
     {
         return $this->reference;
     }
+
+    public function orderedQuantity(): OrderedQuantity
+    {
+        return  $this->orderedQuantity;
+    }
+
+    public function changeOrderedQuantity(OrderedQuantity $newQuantity): void
+    {
+        $this->orderedQuantity = $newQuantity;
+    }
 }
