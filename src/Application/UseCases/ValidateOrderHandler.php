@@ -14,7 +14,7 @@ use App\Application\Responses\ConfirmOrderResponse;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderElement;
 
-readonly class ConfirmOrderHandler
+readonly class ValidateOrderHandler
 {
 
 
@@ -37,8 +37,7 @@ readonly class ConfirmOrderHandler
         $currency = Currency::in($command->currency());
         $payment = MeanPayment::in($command->payment());
 
-        $order = $this->orderRepository->byId($orderId);
-        $order = $this->getOrderOrThrowNotFoundException($order->id());
+        $order = $this->getOrderOrThrowNotFoundException(new Id($command->orderId()));
         $discount = $this->getDiscountFromOrder($order->orderElements());
         $this->decreaseStockWithIncomingOrder($order->orderElements());
         $order->setIsValidated();

@@ -287,7 +287,7 @@ class SaveOrderTest extends TestCase
      * @throws NotFoundOrderElementException
      * @throws NotFoundFruitReferenceException
      */
-    public function test_can_throw_fruit_reference_is_not_available_in_stock_exception_when_ordered_not_available_in_stock_element()
+    public function test_can_throw_fruit_reference_not_available_in_stock_exception_when_ordered_not_available_in_stock_element()
     {
         $command = new SaveOrderCommand(
             'Ref03',
