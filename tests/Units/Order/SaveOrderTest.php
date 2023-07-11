@@ -13,6 +13,8 @@ use App\Application\Exceptions\InvalidCommandException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
 use App\Application\Exceptions\NotFoundOrderException;
+use App\Application\Exceptions\FruitReferenceIsNotAvailableInStockException;
+use App\Application\Services\CheckFruitReferenceAvailabilityService;
 use App\Application\Services\GetFruitByReferenceService;
 use App\Application\UseCases\SaveOrderHandler;
 use App\Application\ValueObjects\FruitReference;
@@ -36,9 +38,12 @@ class SaveOrderTest extends TestCase
         $this->fruitRepository = new InMemoryFruitRepository();
     }
 
+
     /**
+     * @throws FruitReferenceIsNotAvailableInStockException
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException|NotFoundOrderElementException
+     * @throws NotFoundOrderException
+     * @throws NotFoundOrderElementException
      */
     public function test_can_create_an_order()
     {
@@ -59,9 +64,12 @@ class SaveOrderTest extends TestCase
         $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
     }
 
+
     /**
+     * @throws FruitReferenceIsNotAvailableInStockException
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException|NotFoundOrderElementException
+     * @throws NotFoundOrderException
+     * @throws NotFoundOrderElementException
      */
     public function test_can_add_element_to_order()
     {
@@ -82,9 +90,12 @@ class SaveOrderTest extends TestCase
         $this->assertNotEmpty($savedOrder->orderElements());
     }
 
+
     /**
+     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
-     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
+     * @throws NotFoundOrderElementException
      */
     public function test_can_update_order_when_element_is_already_present()
     {
@@ -106,9 +117,12 @@ class SaveOrderTest extends TestCase
         $this->assertCount(count($existingOrder->orderElements()),$retrieveOrder->orderElements());
     }
 
+
     /**
+     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
-     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
+     * @throws NotFoundOrderElementException
      */
     public function test_can_destroy_order_while_removing_last_element_from_existing_order()
     {
@@ -129,10 +143,11 @@ class SaveOrderTest extends TestCase
         $this->assertEquals($command->orderId, $response->orderId);
     }
 
+
     /**
-     * @return void
+     * @throws NotFoundOrderElementException
+     * @throws FruitReferenceIsNotAvailableInStockException
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException|NotFoundOrderElementException
      */
     public function test_can_throw_order_not_found_exception()
     {
@@ -149,8 +164,10 @@ class SaveOrderTest extends TestCase
         $handler->handle($command);
     }
 
+
     /**
      * @throws NotFoundOrderException
+     * @throws FruitReferenceIsNotAvailableInStockException
      * @throws NotFoundFruitReferenceException
      */
     public function test_can_throw_order_element_not_found_exception()
@@ -183,10 +200,12 @@ class SaveOrderTest extends TestCase
         $handler->handle($command);
 
     }
+
     /**
-     * @return void
+     * @throws FruitReferenceIsNotAvailableInStockException
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException|NotFoundOrderElementException
+     * @throws NotFoundOrderException
+     * @throws NotFoundOrderElementException
      */
     public function test_can_throw_invalid_command_exception_with_invalid_fruit_ref()
     {
@@ -198,9 +217,12 @@ class SaveOrderTest extends TestCase
         $handler->handle($command);
     }
 
+
     /**
+     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
-     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
+     * @throws NotFoundOrderElementException
      */
     public function test_can_throw_invalid_command_exception_with_invalid_ordered_quantity()
     {
@@ -217,7 +239,24 @@ class SaveOrderTest extends TestCase
     }
 
     /**
-     * @throws NotFoundOrderException|NotFoundOrderElementException
+     * @throws NotFoundOrderException
+     * @throws NotFoundOrderElementException
+     * @throws NotFoundFruitReferenceException
+     */
+    public function test_can_throw_fruit_reference_is_not_available_in_stock_exception_when_ordered_not_available_in_stock_element()
+    {
+        $command = new SaveOrderCommand(
+            'Ref02',
+            5
+        );
+
+        $handler = $this->createSaveOrderHandler();
+        $this->expectException(FruitReferenceIsNotAvailableInStockException::class);
+        $handler->handle($command);
+    }
+    
+    /**
+     * @throws NotFoundOrderException|NotFoundOrderElementException|FruitReferenceIsNotAvailableInStockException
      */
     public function test_can_throw_fruit_reference_not_found_exception()
     {
@@ -254,10 +293,12 @@ class SaveOrderTest extends TestCase
     public function createSaveOrderHandler(): SaveOrderHandler
     {
         $getFruitByReferenceService = new GetFruitByReferenceService($this->fruitRepository);
+        $checkFruitReferenceAvailabilityService = new CheckFruitReferenceAvailabilityService($this->fruitRepository);
 
         return new SaveOrderHandler(
             $this->orderRepository,
-            $getFruitByReferenceService
+            $getFruitByReferenceService,
+            $checkFruitReferenceAvailabilityService
         );
     }
 }

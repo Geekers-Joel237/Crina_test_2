@@ -6,10 +6,12 @@ use App\Application\Commands\SaveOrderCommand;
 use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
 use App\Application\Enums\OrderAction;
+use App\Application\Exceptions\FruitReferenceIsNotAvailableInStockException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\Responses\SaveOrderResponse;
+use App\Application\Services\CheckFruitReferenceAvailabilityService;
 use App\Application\Services\GetFruitByReferenceService;
 use App\Application\ValueObjects\FruitReference;
 use App\Application\ValueObjects\Id;
@@ -20,9 +22,11 @@ readonly class SaveOrderHandler
 {
 
 
+
     public function __construct(
-        private OrderRepository            $repository,
-        private GetFruitByReferenceService $verifyIfFruitReferenceExistsOrThrowNotFoundException
+        private OrderRepository                        $repository,
+        private GetFruitByReferenceService             $verifyIfFruitReferenceExistsOrThrowNotFoundException,
+        private CheckFruitReferenceAvailabilityService $verifyIfFruitReferenceIsAvailableInStockOrThrowFruitReferenceIsNotAvailableInStockException,
     )
     {
     }
@@ -30,6 +34,7 @@ readonly class SaveOrderHandler
     /**
      * @throws NotFoundOrderException
      * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
+     * @throws FruitReferenceIsNotAvailableInStockException
      */
     public function handle(SaveOrderCommand $command): SaveOrderResponse
     {
@@ -37,13 +42,13 @@ readonly class SaveOrderHandler
 
         $orderId = $command->orderId ? new Id($command->orderId) : null;
         $fruitRef = new FruitReference($command->fruitRef);
+
+        $this->verifyIfFruitReferenceExistsOrThrowNotFoundException->execute($fruitRef);
+        $this->verifyIfFruitReferenceIsAvailableInStockOrThrowFruitReferenceIsNotAvailableInStockException->execute($fruitRef);
         $orderElement = new OrderElement(
             reference: $fruitRef,
             orderedQuantity: new OrderedQuantity($command->orderedQuantity)
         );
-
-        $this->verifyIfFruitReferenceExistsOrThrowNotFoundException->execute($fruitRef);
-
         if (!$orderId) {
             $order = Order::create(
                 orderElement: $orderElement,
