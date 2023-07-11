@@ -4,6 +4,7 @@ namespace App\Persistence\Repositories\Fruit;
 
 use App\Application\Entities\Fruit\Fruit;
 use App\Application\Entities\Fruit\FruitRepository;
+use App\Application\Enums\FruitStatus;
 use App\Application\ValueObjects\FruitReference;
 use App\Application\ValueObjects\Id;
 
@@ -73,6 +74,8 @@ class InMemoryFruitRepository implements FruitRepository
       return  array_values(array_filter(
             $this->fruits,
             fn(Fruit $f) => $f->reference()->value() === $fruitReference->value()
+                and
+            $f->status()->value === FruitStatus::AVAILABLE->value
         ));
     }
 
@@ -84,5 +87,17 @@ class InMemoryFruitRepository implements FruitRepository
         ));
 
         $this->fruits = $newFruits;
+    }
+
+    public function save(Fruit $fruit): void
+    {
+        $fruits = array_values(
+            array_filter(
+                $this->fruits,fn(Fruit $f) => $f->id()->value() !== $fruit->id()->value()
+            )
+        );
+
+        $this->fruits = $fruits;
+        $this->fruits[] = $fruit;
     }
 }

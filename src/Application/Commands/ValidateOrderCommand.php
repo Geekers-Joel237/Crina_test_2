@@ -2,13 +2,13 @@
 
 namespace App\Application\Commands;
 
-
 readonly class ValidateOrderCommand
 {
     public function __construct(
         private string $orderId,
-        private int    $currency,
-        private int    $meanPayment
+        private int $currency,
+        private int $payment,
+
     )
     {
     }
@@ -18,13 +18,13 @@ readonly class ValidateOrderCommand
         return $this->orderId;
     }
 
-    public function currency() : int
+    public function currency(): int
     {
         return $this->currency;
     }
 
-    public function meanPayment(): int
+    public function payment(): int
     {
-        return $this->meanPayment;
+        return $this->payment;
     }
 }

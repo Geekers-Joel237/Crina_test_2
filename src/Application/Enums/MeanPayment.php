@@ -17,5 +17,14 @@ enum MeanPayment: int
 
         return $self;
     }
+
+    public function humanValue(): string
+    {
+        return match ($this->value){
+            1 => 'Mobile Money',
+            2 => 'Orange Money',
+            3 => 'Master Card'
+        };
+    }
 }
 

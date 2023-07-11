@@ -13,7 +13,7 @@ use App\Application\Exceptions\InvalidCommandException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
 use App\Application\Exceptions\NotFoundOrderException;
-use App\Application\Exceptions\FruitReferenceIsNotAvailableInStockException;
+use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
 use App\Application\Services\CheckFruitReferenceAvailabilityService;
 use App\Application\Services\GetFruitByReferenceService;
 use App\Application\UseCases\SaveOrderHandler;
@@ -41,7 +41,7 @@ class SaveOrderTest extends TestCase
 
 
     /**
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
@@ -67,7 +67,7 @@ class SaveOrderTest extends TestCase
 
 
     /**
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
@@ -93,7 +93,7 @@ class SaveOrderTest extends TestCase
 
 
     /**
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
@@ -123,7 +123,7 @@ class SaveOrderTest extends TestCase
 
 
     /**
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
@@ -148,7 +148,7 @@ class SaveOrderTest extends TestCase
     }
 
     /**
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
@@ -190,7 +190,7 @@ class SaveOrderTest extends TestCase
 
     /**
      * @throws NotFoundOrderElementException
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      */
     public function test_can_throw_order_not_found_exception()
@@ -211,7 +211,7 @@ class SaveOrderTest extends TestCase
 
     /**
      * @throws NotFoundOrderException
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      */
     public function test_can_throw_order_element_not_found_exception()
@@ -246,7 +246,7 @@ class SaveOrderTest extends TestCase
     }
 
     /**
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
@@ -263,7 +263,7 @@ class SaveOrderTest extends TestCase
 
 
     /**
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
@@ -295,7 +295,7 @@ class SaveOrderTest extends TestCase
         );
 
         $handler = $this->createSaveOrderHandler();
-        $this->expectException(FruitReferenceIsNotAvailableInStockException::class);
+        $this->expectException(NotAvailableInStockFruitReferenceException::class);
         $this->expectExceptionMessage("Ce fruit n'est plus disponible en stock !");
         $handler->handle($command);
     }
@@ -317,12 +317,12 @@ class SaveOrderTest extends TestCase
 
         $handler = $this->createSaveOrderHandler();
 
-        $this->expectException(FruitReferenceIsNotAvailableInStockException::class);
+        $this->expectException(NotAvailableInStockFruitReferenceException::class);
         $this->expectExceptionMessage("La quantité demandée pour ce fruit n'est plus disponible en stock !");
         $handler->handle($command);
     }
     /**
-     * @throws NotFoundOrderException|NotFoundOrderElementException|FruitReferenceIsNotAvailableInStockException
+     * @throws NotFoundOrderException|NotFoundOrderElementException|NotAvailableInStockFruitReferenceException
      */
     public function test_can_throw_fruit_reference_not_found_exception()
     {

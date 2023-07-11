@@ -2,6 +2,7 @@
 
 namespace App\Application\Entities\Fruit;
 
+use App\Application\Enums\FruitStatus;
 use App\Application\ValueObjects\FruitReference;
 use App\Application\ValueObjects\Id;
 
@@ -10,14 +11,15 @@ class Fruit
 
     public function __construct(
         private Id             $id,
-        private FruitReference $reference
+        private FruitReference $reference,
+        private FruitStatus    $fruitStatus,
     )
     {
     }
 
     public static function create(Id $id, FruitReference $reference): self
     {
-        return new self($id, $reference);
+        return new self($id, $reference,FruitStatus::AVAILABLE);
     }
 
     /**
@@ -31,5 +33,14 @@ class Fruit
     public function id(): Id
     {
         return  $this->id;
+    }
+
+    public function status(): FruitStatus
+    {
+        return $this->fruitStatus;
+    }
+    public function setHasSold(): void
+    {
+        $this->fruitStatus = FruitStatus::SOLD;
     }
 }

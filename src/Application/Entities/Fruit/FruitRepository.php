@@ -13,7 +13,8 @@ interface FruitRepository
      */
     public function byReference(FruitReference $fruitRef): ?Fruit;
 
-    public function delete(Id $fruitId);
 
     public function allByReference(FruitReference $fruitReference): array;
+
+    public function save(Fruit $fruit): void;
 }

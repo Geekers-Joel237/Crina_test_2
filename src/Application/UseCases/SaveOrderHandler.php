@@ -6,7 +6,7 @@ use App\Application\Commands\SaveOrderCommand;
 use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
 use App\Application\Enums\OrderAction;
-use App\Application\Exceptions\FruitReferenceIsNotAvailableInStockException;
+use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
 use App\Application\Exceptions\NotFoundOrderException;
@@ -26,7 +26,7 @@ readonly class SaveOrderHandler
     public function __construct(
         private OrderRepository                        $repository,
         private GetFruitByReferenceService             $verifyIfFruitReferenceExistsOrThrowNotFoundException,
-        private CheckFruitReferenceAvailabilityService $verifyIfFruitReferenceIsAvailableInStockOrThrowFruitReferenceIsNotAvailableInStockException,
+        private CheckFruitReferenceAvailabilityService $verifyIfFruitReferenceIsAvailableInStockOrThrowNotAvailableInStockException,
 
     )
     {
@@ -35,7 +35,7 @@ readonly class SaveOrderHandler
     /**
      * @throws NotFoundOrderException
      * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
-     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotAvailableInStockFruitReferenceException
      */
     public function handle(SaveOrderCommand $command): SaveOrderResponse
     {
@@ -50,7 +50,7 @@ readonly class SaveOrderHandler
             reference: $fruitRef,
             orderedQuantity: new OrderedQuantity($command->orderedQuantity)
         );
-        $this->verifyIfFruitReferenceIsAvailableInStockOrThrowFruitReferenceIsNotAvailableInStockException->execute($orderElement);
+        $this->verifyIfFruitReferenceIsAvailableInStockOrThrowNotAvailableInStockException->execute($orderElement);
 
         if (!$orderId) {
             $order = Order::create(

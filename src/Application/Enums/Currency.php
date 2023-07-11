@@ -16,4 +16,13 @@ enum Currency: int
         }
         return $self;
     }
+
+    public function humanValue(): string
+    {
+        return match ($this->value){
+            1 => 'Francs CFA',
+            2 => 'Euros',
+            3 => 'Dollars'
+        };
+    }
 }
