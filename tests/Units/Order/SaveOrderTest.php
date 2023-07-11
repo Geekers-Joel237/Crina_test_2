@@ -97,7 +97,7 @@ class SaveOrderTest extends TestCase
      * @throws NotFoundOrderException
      * @throws NotFoundOrderElementException
      */
-    public function test_can_update_order_when_element_is_already_present()
+    public function test_can_update_order_where_add_already_present_in_order_element()
     {
         $existingOrder = $this->buildOrderSUT();
         $command = new SaveOrderCommand(
