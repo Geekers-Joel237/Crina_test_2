@@ -24,6 +24,7 @@ use App\Application\ValueObjects\OrderElement;
 use App\Persistence\Repositories\Fruit\InMemoryFruitRepository;
 use App\Persistence\Repositories\Order\InMemoryOrderRepository;
 use PHPUnit\Framework\TestCase;
+use Tests\Units\Order\Builder\Director;
 
 class SaveOrderTest extends TestCase
 {
@@ -146,6 +147,46 @@ class SaveOrderTest extends TestCase
         $this->assertEquals($command->orderId, $response->orderId);
     }
 
+    /**
+     * @throws FruitReferenceIsNotAvailableInStockException
+     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderException
+     * @throws NotFoundOrderElementException
+     */
+    public function test_can_delete_order_element_from_existing_order()
+    {
+        $orderElement1 = new OrderElement(
+            reference: new FruitReference('Ref02'),
+            orderedQuantity: new OrderedQuantity(2)
+        );
+        $orderElement2 = new OrderElement(
+            reference: new FruitReference('Ref03'),
+            orderedQuantity: new OrderedQuantity(1)
+        );
+        $orderWithManyOrderElements = Director::makeBuilder()
+                                                ->build()
+                                                ->withOrderElement($orderElement1)
+                                                ->withOrderElement($orderElement2)
+                                                ->order();
+        $this->orderRepository->save($orderWithManyOrderElements);
+        $command = new SaveOrderCommand(
+            fruitRef: $orderWithManyOrderElements->orderElements()[0]->reference()->value(),
+            orderedQuantity: 10
+        );
+
+        $command->orderId = $orderWithManyOrderElements->id()->value();
+        $command->action = OrderAction::REMOVE_FROM_ORDER->value;
+        $orderElementsBeforeOrder = count($orderWithManyOrderElements->orderElements());
+        $handler = $this->createSaveOrderHandler();
+        $response = $handler->handle($command);
+
+        $retrieveOrder = $this->orderRepository->byId(new Id($command->orderId));
+        $this->assertTrue($response->isSaved);
+        $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
+        $this->assertNotNull($response->orderId);
+        $this->assertEquals($command->orderId, $response->orderId);
+        $this->assertTrue(count($retrieveOrder->orderElements()) === $orderElementsBeforeOrder - 1 );
+    }
 
     /**
      * @throws NotFoundOrderElementException
