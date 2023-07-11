@@ -38,7 +38,7 @@ class SaveOrderTest extends TestCase
 
     /**
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException
+     * @throws NotFoundOrderException|NotFoundOrderElementException
      */
     public function test_can_create_an_order()
     {
@@ -61,7 +61,7 @@ class SaveOrderTest extends TestCase
 
     /**
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException
+     * @throws NotFoundOrderException|NotFoundOrderElementException
      */
     public function test_can_add_element_to_order()
     {
@@ -74,16 +74,17 @@ class SaveOrderTest extends TestCase
 
         $handler = $this->createSaveOrderHandler();
         $response = $handler->handle($command);
-
+        $savedOrder = $this->orderRepository->byId(new Id($response->orderId));
         $this->assertTrue($response->isSaved);
         $this->assertNotNull($response->orderId);
         $this->assertEquals($command->orderId, $response->orderId);
         $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
+        $this->assertNotEmpty($savedOrder->orderElements());
     }
 
     /**
      * @throws NotFoundOrderException
-     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
      */
     public function test_can_update_order_when_element_is_already_present()
     {
@@ -107,7 +108,7 @@ class SaveOrderTest extends TestCase
 
     /**
      * @throws NotFoundOrderException
-     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
      */
     public function test_can_destroy_order_while_removing_last_element_from_existing_order()
     {
@@ -131,7 +132,7 @@ class SaveOrderTest extends TestCase
     /**
      * @return void
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException
+     * @throws NotFoundOrderException|NotFoundOrderElementException
      */
     public function test_can_throw_order_not_found_exception()
     {
@@ -185,7 +186,7 @@ class SaveOrderTest extends TestCase
     /**
      * @return void
      * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderException
+     * @throws NotFoundOrderException|NotFoundOrderElementException
      */
     public function test_can_throw_invalid_command_exception_with_invalid_fruit_ref()
     {
@@ -199,7 +200,7 @@ class SaveOrderTest extends TestCase
 
     /**
      * @throws NotFoundOrderException
-     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
      */
     public function test_can_throw_invalid_command_exception_with_invalid_ordered_quantity()
     {
@@ -216,7 +217,7 @@ class SaveOrderTest extends TestCase
     }
 
     /**
-     * @throws NotFoundOrderException
+     * @throws NotFoundOrderException|NotFoundOrderElementException
      */
     public function test_can_throw_fruit_reference_not_found_exception()
     {

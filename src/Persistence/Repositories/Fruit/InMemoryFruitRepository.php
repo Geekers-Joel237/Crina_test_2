@@ -21,9 +21,15 @@ class InMemoryFruitRepository implements FruitRepository
             Fruit::create(new Id('001'), new FruitReference('Ref01')),
             Fruit::create(new Id('002'), new FruitReference('Ref01')),
             Fruit::create(new Id('003'), new FruitReference('Ref01')),
-            Fruit::create(new Id('004'), new FruitReference('Ref02')),
-            Fruit::create(new Id('005'), new FruitReference('Ref02')),
-            Fruit::create(new Id('006'), new FruitReference('Ref02')),
+            Fruit::create(new Id('004'), new FruitReference('Ref01')),
+            Fruit::create(new Id('005'), new FruitReference('Ref01')),
+            Fruit::create(new Id('006'), new FruitReference('Ref01')),
+            Fruit::create(new Id('007'), new FruitReference('Ref01')),
+            Fruit::create(new Id('008'), new FruitReference('Ref01')),
+            Fruit::create(new Id('009'), new FruitReference('Ref01')),
+            Fruit::create(new Id('010'), new FruitReference('Ref01')),
+            Fruit::create(new Id('011'), new FruitReference('Ref01')),
+            Fruit::create(new Id('012'), new FruitReference('Ref01')),
         ];
     }
 

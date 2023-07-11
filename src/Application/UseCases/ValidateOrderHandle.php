@@ -45,7 +45,7 @@ readonly class ValidateOrderHandle
         $orderId = new Id($command->orderId());
         $moneyType = Currency::in($command->currency());
         $meanPayment = MeanPayment::in($command->meanPayment());
-
+        //TODO : persist moneyTYpe
         $order = $this->orderRepository->byId($orderId);
         $this->IfOrderExistValidatedItOrThrowNotFoundException($order);
 
@@ -82,7 +82,6 @@ readonly class ValidateOrderHandle
             return;
         }
         throw new NotFoundOrderException("Cette commande n'existe pas");
-
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
 use App\Application\Enums\OrderAction;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
+use App\Application\Exceptions\NotFoundOrderElementException;
 use App\Application\Exceptions\NotFoundOrderException;
 use App\Application\Responses\SaveOrderResponse;
 use App\Application\Services\GetFruitByReferenceService;
@@ -28,7 +29,7 @@ readonly class SaveOrderHandler
 
     /**
      * @throws NotFoundOrderException
-     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
      */
     public function handle(SaveOrderCommand $command): SaveOrderResponse
     {

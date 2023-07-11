@@ -67,13 +67,13 @@ class ValidateOrderTest extends TestCase
         $response = $handle->handle($command);
 
         $existingOrder = $this->orderRepository->byId(new Id($command->orderId()));
-        $existingFruitsAfterOrder = $this->fruitRepository->allByReference($order->orderElements()[0]->reference());
+        $remainingFruitsAfterOrder = $this->fruitRepository->allByReference($order->orderElements()[0]->reference());
 
 
         $this->assertTrue($response->isValidated);
         $this->assertEquals(OrderStatus::IS_VALIDATED->value, $existingOrder->status()->value);
         $this->assertCount(count($existingFruitsBeforeOrder) - $existingOrder->orderElements()[0]->orderedQuantity()->value() ,
-            $existingFruitsAfterOrder);
+            $remainingFruitsAfterOrder);
     }
 
     /**
