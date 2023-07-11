@@ -105,7 +105,7 @@ class SaveOrderTest extends TestCase
             15
         );
         $command->orderId = $existingOrder->id()->value();
-
+        $beforeOrderQuantity = $existingOrder->orderElements()[0]->orderedQuantity()->value();
         $handler = $this->createSaveOrderHandler();
         $response = $handler->handle($command);
 
@@ -115,6 +115,9 @@ class SaveOrderTest extends TestCase
         $this->assertEquals($command->orderId, $response->orderId);
         $this->assertEquals(OrderStatus::IS_SAVED->value, $response->orderStatus);
         $this->assertCount(count($existingOrder->orderElements()),$retrieveOrder->orderElements());
+        $this->assertEquals(
+            $retrieveOrder->orderElements()[0]->orderedQuantity()->value(),
+            $command->orderedQuantity + $beforeOrderQuantity);
     }
 
 
