@@ -27,6 +27,7 @@ readonly class SaveOrderHandler
         private OrderRepository                        $repository,
         private GetFruitByReferenceService             $verifyIfFruitReferenceExistsOrThrowNotFoundException,
         private CheckFruitReferenceAvailabilityService $verifyIfFruitReferenceIsAvailableInStockOrThrowFruitReferenceIsNotAvailableInStockException,
+
     )
     {
     }
@@ -44,11 +45,13 @@ readonly class SaveOrderHandler
         $fruitRef = new FruitReference($command->fruitRef);
 
         $this->verifyIfFruitReferenceExistsOrThrowNotFoundException->execute($fruitRef);
-        $this->verifyIfFruitReferenceIsAvailableInStockOrThrowFruitReferenceIsNotAvailableInStockException->execute($fruitRef);
+
         $orderElement = new OrderElement(
             reference: $fruitRef,
             orderedQuantity: new OrderedQuantity($command->orderedQuantity)
         );
+        $this->verifyIfFruitReferenceIsAvailableInStockOrThrowFruitReferenceIsNotAvailableInStockException->execute($orderElement);
+
         if (!$orderId) {
             $order = Order::create(
                 orderElement: $orderElement,

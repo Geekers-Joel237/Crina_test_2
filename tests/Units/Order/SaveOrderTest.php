@@ -178,7 +178,7 @@ class SaveOrderTest extends TestCase
         );
         $orderElement2 = new OrderElement(
             reference: new FruitReference('Ref02'),
-            orderedQuantity: new OrderedQuantity(20)
+            orderedQuantity: new OrderedQuantity(1)
         );
         $fruit = Fruit::create(new Id('002'), $orderElement2->reference());
         $this->fruitRepository->fruits[] = $fruit;
@@ -190,7 +190,7 @@ class SaveOrderTest extends TestCase
 
         $command = new SaveOrderCommand(
             $orderElement2->reference()->value(),
-            10
+            1
         );
         $command->orderId = $existingOrder->id()->value();
         $command->action = OrderAction::REMOVE_FROM_ORDER->value;
@@ -246,15 +246,37 @@ class SaveOrderTest extends TestCase
     public function test_can_throw_fruit_reference_is_not_available_in_stock_exception_when_ordered_not_available_in_stock_element()
     {
         $command = new SaveOrderCommand(
-            'Ref02',
+            'Ref03',
             5
         );
 
         $handler = $this->createSaveOrderHandler();
         $this->expectException(FruitReferenceIsNotAvailableInStockException::class);
+        $this->expectExceptionMessage("Ce fruit n'est plus disponible en stock !");
         $handler->handle($command);
     }
-    
+
+    /**
+     * @throws NotFoundOrderException
+     * @throws NotFoundOrderElementException
+     * @throws NotFoundFruitReferenceException
+     */
+    public function test_can_throw_fruit_reference_not_available_in_stock_exception_when_ordered_more_than_quantity_in_stock()
+    {
+        $existingOrder = $this->buildOrderSUT();
+        $command = new SaveOrderCommand(
+            $existingOrder->orderElements()[0]->reference()->value(),
+            35
+        );
+        $fruitsByReferenceInStock = $this->fruitRepository->allByReference($existingOrder->orderElements()[0]->reference());
+        $this->assertTrue($command->orderedQuantity > count($fruitsByReferenceInStock));
+
+        $handler = $this->createSaveOrderHandler();
+
+        $this->expectException(FruitReferenceIsNotAvailableInStockException::class);
+        $this->expectExceptionMessage("La quantité demandée pour ce fruit n'est plus disponible en stock !");
+        $handler->handle($command);
+    }
     /**
      * @throws NotFoundOrderException|NotFoundOrderElementException|FruitReferenceIsNotAvailableInStockException
      */
