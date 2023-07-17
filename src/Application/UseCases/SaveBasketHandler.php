@@ -6,6 +6,7 @@ use App\Application\Commands\SaveBasketCommand;
 use App\Application\Entities\Basket\Basket;
 use App\Application\Entities\Basket\BasketRepository;
 use App\Application\Enums\BasketAction;
+use App\Application\Exceptions\InvalidCommandException;
 use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
@@ -45,10 +46,13 @@ readonly class SaveBasketHandler
 
         $this->verifyIfFruitReferenceExistsOrThrowNotFoundException->execute($fruitRef);
 
+        $orderedQuantity = new OrderedQuantity($command->orderedQuantity);
         $orderElement = new OrderElement(
             reference: $fruitRef,
-            orderedQuantity: new OrderedQuantity($command->orderedQuantity)
+            orderedQuantity: $orderedQuantity
         );
+        $action = BasketAction::in($command->action);
+        $this->verifyIfQuantityIsProvidedInAddToBasketCase($action, $orderedQuantity);
         $this->verifyIfFruitReferenceIsAvailableInStockOrThrowNotAvailableInStockException->execute($orderElement);
 
         if (!$basketId) {
@@ -57,7 +61,6 @@ readonly class SaveBasketHandler
                 id: $basketId
             );
         } else {
-            $action = BasketAction::in($command->action);
             $basket = $this->getBasketOrThrowNotFoundException($basketId);
             $basket->updateBasket($orderElement, $action);
         }
@@ -69,6 +72,20 @@ readonly class SaveBasketHandler
         $response->basketStatus = $basket->status()->value;
 
         return $response;
+    }
+
+    /**
+     * @param BasketAction $action
+     * @param OrderedQuantity $orderedQuantity
+     * @return void
+     */
+    public function verifyIfQuantityIsProvidedInAddToBasketCase(BasketAction $action, OrderedQuantity $orderedQuantity): void
+    {
+        if ($action === BasketAction::ADD_TO_BASKET) {
+            if (is_null($orderedQuantity->value())) {
+                throw new \InvalidArgumentException("Impossible d'ajouter sans préciser la quantité !");
+            }
+        }
     }
 
     /**

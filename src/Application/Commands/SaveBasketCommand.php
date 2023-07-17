@@ -3,6 +3,7 @@
 namespace App\Application\Commands;
 
 use App\Application\Enums\BasketAction;
+use App\Application\Exceptions\InvalidCommandException;
 
 class SaveBasketCommand
 {
@@ -21,5 +22,6 @@ class SaveBasketCommand
     {
         $this->basketId = null;
         $this->action = BasketAction::ADD_TO_BASKET->value;
+
     }
 }
