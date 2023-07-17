@@ -9,17 +9,17 @@ use App\Application\ValueObjects\Id;
 class InMemoryBasketRepository implements BasketRepository
 {
 
-    private array $orders = [];
+    private array $baskets = [];
 
-    public function save(Basket $order): void
+    public function save(Basket $basket): void
     {
-        $this->orders[] = $order;
+        $this->baskets[] = $basket;
     }
 
-    public function byId(Id $orderId): ?Basket
+    public function byId(Id $basketId): ?Basket
     {
         $result = array_values(array_filter(
-                $this->orders, fn(Basket $o) => $o->id()->value() === $orderId->value())
+                $this->baskets, fn(Basket $b) => $b->id()->value() === $basketId->value())
         );
 
         return count($result) > 0 ? $result[0] : null;

@@ -6,7 +6,7 @@ use App\Application\ValueObjects\Id;
 
 interface BasketRepository
 {
-    public function save(Basket $order): void;
+    public function save(Basket $basket): void;
 
-    public function byId(Id $orderId): ?Basket;
+    public function byId(Id $basketId): ?Basket;
 }

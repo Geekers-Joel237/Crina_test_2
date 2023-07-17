@@ -2,10 +2,10 @@
 
 namespace App\Application\Responses;
 
-class ValidateOrderResponse
+class ValidateBasketResponse
 {
-    public ?string $orderId = null;
 
     public bool $isValidated = false;
 
+    public ?string $orderId = null;
 }

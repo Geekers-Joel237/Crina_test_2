@@ -369,10 +369,10 @@ class SaveBasketTest extends TestCase
     public function test_can_throw_invalid_argument_exception_with_not_give_the_quantity()
     {
         $existingBasket = $this->buildBasketSUT();
-        $this->expectException(InvalidArgumentException::class);
         $command = new SaveBasketCommand($existingBasket->orderElements()[0]->reference()->value());
 
         $handler = $this->createSaveBasketHandler();
+        $this->expectException(InvalidArgumentException::class);
         $handler->handle($command);
     }
 
