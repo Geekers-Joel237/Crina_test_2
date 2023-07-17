@@ -67,7 +67,7 @@ class ValidateBasketTest extends TestCase
         $this->assertNotNull($order->discount());
         $this->assertNotNull($order->currency());
         $this->assertNotNull($order->meanPayment());
-        $this->assertEquals($basket->id()->value(),$order->basketId()->value());
+        $this->assertEquals($basket->id()->value(), $order->basketId()->value());
 
 
         $this->assertCount(

@@ -210,15 +210,5 @@ readonly class ValidateBasketHandler
         return $fruitsToRemove;
     }
 
-    /**
-     * @param Fruit[] $fruitsToRemove
-     * @return void
-     */
-    private
-    function setFruitsToRemoveHasAvailable(array $fruitsToRemove): void
-    {
-        foreach ($fruitsToRemove as $fruit) {
-            $fruit->setHasAvailable();
-        }
-    }
+
 }
