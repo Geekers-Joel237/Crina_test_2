@@ -2,6 +2,6 @@
 
 namespace App\Application\Exceptions;
 
-class NotFoundOrderException extends \Exception
+class NotFoundBasketException extends \Exception
 {
 }

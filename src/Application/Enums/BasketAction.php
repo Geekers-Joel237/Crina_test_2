@@ -3,11 +3,11 @@
 namespace App\Application\Enums;
 
 
-enum OrderAction: int
+enum BasketAction: int
 {
 
-    case ADD_TO_ORDER = 1;
-    case REMOVE_FROM_ORDER = 2;
+    case ADD_TO_BASKET = 1;
+    case REMOVE_FROM_BASKET = 2;
 
     public static function in(?int $action): self
     {

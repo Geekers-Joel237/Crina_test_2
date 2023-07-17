@@ -43,4 +43,14 @@ class Fruit
     {
         $this->fruitStatus = FruitStatus::SOLD;
     }
+
+    public function setHasBusy(): void
+    {
+        $this->fruitStatus = FruitStatus::BUSY;
+    }
+
+    public function setHasAvailable(): void
+    {
+        $this->fruitStatus = FruitStatus::AVAILABLE;
+    }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Application\Enums;
 
-enum OrderStatus: int
+enum BasketStatus: int
 {
 
     case IS_SAVED = 1;

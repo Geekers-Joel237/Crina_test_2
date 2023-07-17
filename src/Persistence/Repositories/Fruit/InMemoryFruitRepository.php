@@ -55,7 +55,8 @@ class InMemoryFruitRepository implements FruitRepository
             Fruit::create(new Id('034'), new FruitReference('Ref02')),
             Fruit::create(new Id('035'), new FruitReference('Ref02')),
             Fruit::create(new Id('036'), new FruitReference('Ref02')),
-            Fruit::create(new Id('037'), new FruitReference('Ref03')),
+            Fruit::create(new Id('037'), new FruitReference('Ref02')),
+            Fruit::create(new Id('038'), new FruitReference('Ref03')),
         ];
     }
 
@@ -71,33 +72,27 @@ class InMemoryFruitRepository implements FruitRepository
 
     public function allByReference(FruitReference $fruitReference): array
     {
-      return  array_values(array_filter(
+        return array_values(array_filter(
             $this->fruits,
             fn(Fruit $f) => $f->reference()->value() === $fruitReference->value()
                 and
-            $f->status()->value === FruitStatus::AVAILABLE->value
+                $f->status()->value === FruitStatus::AVAILABLE->value
         ));
-    }
-
-    public function delete(Id $fruitId): void
-    {
-        $newFruits = array_values(array_filter(
-            $this->fruits,
-            fn(Fruit $f) => $f->id()->value() !== $fruitId->value()
-        ));
-
-        $this->fruits = $newFruits;
     }
 
     public function save(Fruit $fruit): void
     {
         $fruits = array_values(
             array_filter(
-                $this->fruits,fn(Fruit $f) => $f->id()->value() !== $fruit->id()->value()
+                $this->fruits, fn(Fruit $f) => $f->id()->value() !== $fruit->id()->value()
             )
         );
 
         $this->fruits = $fruits;
         $this->fruits[] = $fruit;
+    }
+
+    public function saveAll(array $fruitsToRemove): void
+    {
     }
 }

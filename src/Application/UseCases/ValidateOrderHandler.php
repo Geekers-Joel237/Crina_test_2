@@ -3,13 +3,14 @@
 namespace App\Application\UseCases;
 
 use App\Application\Commands\ValidateOrderCommand;
+use App\Application\Entities\Fruit\Fruit;
 use App\Application\Entities\Fruit\FruitRepository;
-use App\Application\Entities\Order\Order;
-use App\Application\Entities\Order\OrderRepository;
+use App\Application\Entities\Basket\Basket;
+use App\Application\Entities\Basket\BasketRepository;
 use App\Application\Enums\Currency;
 use App\Application\Enums\MeanPayment;
-use App\Application\Enums\OrderStatus;
-use App\Application\Exceptions\NotFoundOrderException;
+use App\Application\Enums\BasketStatus;
+use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\Responses\ConfirmOrderResponse;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderElement;
@@ -18,17 +19,16 @@ readonly class ValidateOrderHandler
 {
 
 
-
     public function __construct(
-        private OrderRepository $orderRepository,
-        private FruitRepository $fruitRepository,
+        private BasketRepository $orderRepository,
+        private FruitRepository  $fruitRepository,
 
     )
     {
     }
 
     /**
-     * @throws NotFoundOrderException
+     * @throws NotFoundBasketException
      */
     public function handle(ValidateOrderCommand $command): ConfirmOrderResponse
     {
@@ -38,12 +38,14 @@ readonly class ValidateOrderHandler
         $payment = MeanPayment::in($command->payment());
 
         $order = $this->getOrderOrThrowNotFoundException(new Id($command->orderId()));
+        $this->checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException($order->orderElements());
+
         $discount = $this->getDiscountFromOrder($order->orderElements());
         $this->decreaseStockWithIncomingOrder($order->orderElements());
         $order->setIsValidated();
 
-        if (OrderStatus::IS_VALIDATED->value === $order->status()->value){
-            $response->isConfirmed = true;
+        if (BasketStatus::IS_VALIDATED->value === $order->status()->value) {
+            $response->isValidated = true;
         }
         $response->orderId = $orderId->value();
         $response->currency = $currency->humanValue();
@@ -53,27 +55,107 @@ readonly class ValidateOrderHandler
     }
 
     /**
+     * @throws NotFoundBasketException
+     */
+    private function getOrderOrThrowNotFoundException(?Id $orderId): Basket
+    {
+        $order = $this->orderRepository->byId($orderId);
+        if (!$order) {
+            throw new NotFoundBasketException("Cette commande n'existe pas !");
+        }
+        return $order;
+    }
+
+    /**
+     * @param OrderElement[] $orderElements
+     * @return void
+     */
+    private function checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException(array $orderElements)
+    {
+    }
+
+    /**
+     * @param OrderElement[] $orderElements
+     * @return string
+     */
+    private function getDiscountFromOrder(array $orderElements): string
+    {
+        $firstLevelToGetDiscount = 10;
+        $secondLevelToGetDiscount = 20;
+        $firstDiscountApply = 10;
+        $secondDiscountApply = 15;
+
+        $orderQuantity = $this->getTotalOrderedQuantity($orderElements);
+        return $this->getDiscount($orderQuantity, $firstLevelToGetDiscount, $firstDiscountApply,
+            $secondLevelToGetDiscount, $secondDiscountApply
+        );
+    }
+
+    /**
+     * @param array $orderElements
+     * @return int
+     */
+    public function getTotalOrderedQuantity(array $orderElements): mixed
+    {
+        $orderQuantity = 0;
+        foreach ($orderElements as $element) {
+            $orderQuantity += $element->orderedQuantity()->value();
+        }
+        return $orderQuantity;
+    }
+
+    /**
+     * @param int $orderQuantity
+     * @param int $firstLevelToGetDiscount
+     * @param int $firstDiscountApply
+     * @param int $secondLevelToGetDiscount
+     * @param int $secondDiscountApply
+     * @return int
+     */
+    public function getDiscount(
+        int $orderQuantity,
+        int $firstLevelToGetDiscount,
+        int $firstDiscountApply,
+        int $secondLevelToGetDiscount,
+        int $secondDiscountApply): int
+    {
+        $discount = 0;
+        if ($orderQuantity > $firstLevelToGetDiscount) {
+            $discount = $firstDiscountApply;
+            $discount = $this->checkIfApplySecondDiscountStep($orderQuantity, $secondLevelToGetDiscount, $secondDiscountApply, $discount);
+        }
+        return $discount;
+    }
+
+    /**
+     * @param int $orderQuantity
+     * @param int $secondLevelToGetDiscount
+     * @param int $secondDiscountApply
+     * @param int $discount
+     * @return int
+     */
+    public function checkIfApplySecondDiscountStep(
+        int $orderQuantity,
+        int $secondLevelToGetDiscount,
+        int $secondDiscountApply,
+        int $discount): int
+    {
+        if ($orderQuantity > $secondLevelToGetDiscount) {
+            $discount += $secondDiscountApply;
+        }
+        return $discount;
+    }
+
+    /**
      * @param OrderElement[] $orderElements
      * @return void
      */
     private function decreaseStockWithIncomingOrder(array $orderElements): void
     {
-        foreach ($orderElements as $orderElement){
+        foreach ($orderElements as $orderElement) {
             $this->removeOrderElementInStock($orderElement);
         }
 
-    }
-
-    /**
-     * @throws NotFoundOrderException
-     */
-    private function getOrderOrThrowNotFoundException(?Id $orderId): Order
-    {
-        $order = $this->orderRepository->byId($orderId);
-        if (!$order) {
-            throw new NotFoundOrderException("Cette commande n'existe pas !");
-        }
-        return $order;
     }
 
     /**
@@ -87,16 +169,35 @@ readonly class ValidateOrderHandler
             0,
             $orderElement->orderedQuantity()->value()
         );
-
-        //TODO : marquer les fruits à retirer comme occupé
-        foreach ($fruitsToRemove as $fruit){
+        $fruitsToRemove = $this->setFruitsToRemoveHasBusy($fruitsToRemove);
+        foreach ($fruitsToRemove as $fruit) {
             $fruit->setHasSold();
-            $this->fruitRepository->save($fruit);
         }
+        $this->fruitRepository->saveAll($fruitsToRemove);
+
     }
 
-    private function getDiscountFromOrder(array $orderElements): string
+    /**
+     * @param Fruit[] $fruitsToRemove
+     * @return array
+     */
+    private function setFruitsToRemoveHasBusy(array $fruitsToRemove): array
     {
-        return  '';
+        foreach ($fruitsToRemove as $fruit) {
+            $fruit->setHasBusy();
+        }
+        $this->fruitRepository->saveAll($fruitsToRemove);
+        return $fruitsToRemove;
+    }
+
+    /**
+     * @param Fruit[] $fruitsToRemove
+     * @return void
+     */
+    private function setFruitsToRemoveHasAvailable(array $fruitsToRemove): void
+    {
+        foreach ($fruitsToRemove as $fruit) {
+            $fruit->setHasAvailable();
+        }
     }
 }

@@ -2,15 +2,15 @@
 
 namespace App\Application\UseCases;
 
-use App\Application\Commands\SaveOrderCommand;
-use App\Application\Entities\Order\Order;
-use App\Application\Entities\Order\OrderRepository;
-use App\Application\Enums\OrderAction;
+use App\Application\Commands\SaveBasketCommand;
+use App\Application\Entities\Basket\Basket;
+use App\Application\Entities\Basket\BasketRepository;
+use App\Application\Enums\BasketAction;
 use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
-use App\Application\Exceptions\NotFoundOrderException;
-use App\Application\Responses\SaveOrderResponse;
+use App\Application\Exceptions\NotFoundBasketException;
+use App\Application\Responses\SaveBasketResponse;
 use App\Application\Services\CheckFruitReferenceAvailabilityService;
 use App\Application\Services\GetFruitByReferenceService;
 use App\Application\ValueObjects\FruitReference;
@@ -18,13 +18,12 @@ use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderedQuantity;
 use App\Application\ValueObjects\OrderElement;
 
-readonly class SaveOrderHandler
+readonly class SaveBasketHandler
 {
 
 
-
     public function __construct(
-        private OrderRepository                        $repository,
+        private BasketRepository                       $repository,
         private GetFruitByReferenceService             $verifyIfFruitReferenceExistsOrThrowNotFoundException,
         private CheckFruitReferenceAvailabilityService $verifyIfFruitReferenceIsAvailableInStockOrThrowNotAvailableInStockException,
 
@@ -33,15 +32,15 @@ readonly class SaveOrderHandler
     }
 
     /**
-     * @throws NotFoundOrderException
+     * @throws NotFoundBasketException
      * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
      * @throws NotAvailableInStockFruitReferenceException
      */
-    public function handle(SaveOrderCommand $command): SaveOrderResponse
+    public function handle(SaveBasketCommand $command): SaveBasketResponse
     {
-        $response = new SaveOrderResponse();
+        $response = new SaveBasketResponse();
 
-        $orderId = $command->orderId ? new Id($command->orderId) : null;
+        $basketId = $command->basketId ? new Id($command->basketId) : null;
         $fruitRef = new FruitReference($command->fruitRef);
 
         $this->verifyIfFruitReferenceExistsOrThrowNotFoundException->execute($fruitRef);
@@ -52,36 +51,36 @@ readonly class SaveOrderHandler
         );
         $this->verifyIfFruitReferenceIsAvailableInStockOrThrowNotAvailableInStockException->execute($orderElement);
 
-        if (!$orderId) {
-            $order = Order::create(
+        if (!$basketId) {
+            $basket = Basket::create(
                 orderElement: $orderElement,
-                id: $orderId
+                id: $basketId
             );
         } else {
-            $action = OrderAction::in($command->action);
-            $order = $this->getOrderOrThrowNotFoundException($orderId);
-            $order->updateOrder($orderElement, $action);
+            $action = BasketAction::in($command->action);
+            $basket = $this->getBasketOrThrowNotFoundException($basketId);
+            $basket->updateBasket($orderElement, $action);
         }
 
-        $this->repository->save($order);
+        $this->repository->save($basket);
 
         $response->isSaved = true;
-        $response->orderId = $order->id()->value();
-        $response->orderStatus = $order->status()->value;
+        $response->basketId = $basket->id()->value();
+        $response->basketStatus = $basket->status()->value;
 
         return $response;
     }
 
     /**
      * @param Id|null $orderId
-     * @return Order
-     * @throws NotFoundOrderException
+     * @return Basket
+     * @throws NotFoundBasketException
      */
-    private function getOrderOrThrowNotFoundException(?Id $orderId): Order
+    private function getBasketOrThrowNotFoundException(?Id $orderId): Basket
     {
         $order = $this->repository->byId($orderId);
         if (!$order) {
-            throw new NotFoundOrderException("Cette commande n'existe pas !");
+            throw new NotFoundBasketException("Cette commande n'existe pas !");
         }
 
         return $order;

@@ -17,4 +17,6 @@ interface FruitRepository
     public function allByReference(FruitReference $fruitReference): array;
 
     public function save(Fruit $fruit): void;
+
+    public function saveAll(array $fruitsToRemove): void;
 }

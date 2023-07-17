@@ -19,11 +19,7 @@ class OrderElement
 
     public function orderedQuantity(): OrderedQuantity
     {
-        return  $this->orderedQuantity;
+        return $this->orderedQuantity;
     }
 
-    public function changeOrderedQuantity(OrderedQuantity $newQuantity): void
-    {
-        $this->orderedQuantity = $newQuantity;
-    }
 }
