@@ -15,6 +15,13 @@ class Discount
         $this->validate();
     }
 
+    private function validate(): void
+    {
+        if ($this->value < 0) {
+            throw new InvalidArgumentException("Valeur entrée non valide");
+        }
+    }
+
     public function value(): float
     {
         return $this->value;
@@ -25,20 +32,16 @@ class Discount
         $this->value += $value;
         return $this;
     }
+
     public function sub(float $value): self
     {
         $this->value -= $value;
         return $this;
     }
+
     public function round(): self
     {
         $this->value = round($this->value, 2);
         return $this;
-    }
-    private function validate(): void
-    {
-        if ($this->value < 0) {
-            throw new InvalidArgumentException("Valeur entrée non valide");
-        }
     }
 }
