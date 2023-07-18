@@ -83,7 +83,7 @@ readonly class ValidateBasketHandler
      * @return void
      */
     private
-    function checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException(array $orderElements)
+    function checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException(array $orderElements): void
     {
     }
 
@@ -189,10 +189,7 @@ readonly class ValidateBasketHandler
             $orderElement->orderedQuantity()->value()
         );
         $fruitsToRemove = $this->setFruitsToRemoveHasBusy($fruitsToRemove);
-        foreach ($fruitsToRemove as $fruit) {
-            $fruit->setHasSold();
-        }
-        $this->fruitRepository->saveAll($fruitsToRemove);
+        $this->setFruitsHasSold($fruitsToRemove);
 
     }
 
@@ -208,6 +205,18 @@ readonly class ValidateBasketHandler
         }
         $this->fruitRepository->saveAll($fruitsToRemove);
         return $fruitsToRemove;
+    }
+
+    /**
+     * @param array $fruitsToRemove
+     * @return void
+     */
+    public function setFruitsHasSold(array $fruitsToRemove): void
+    {
+        foreach ($fruitsToRemove as $fruit) {
+            $fruit->setHasSold();
+        }
+        $this->fruitRepository->saveAll($fruitsToRemove);
     }
 
 

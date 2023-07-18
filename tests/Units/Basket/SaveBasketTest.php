@@ -83,7 +83,7 @@ class SaveBasketTest extends TestCase
     /**
      * @return SaveBasketHandler
      */
-    public function createSaveBasketHandler(): SaveBasketHandler
+    private function createSaveBasketHandler(): SaveBasketHandler
     {
         $getFruitByReferenceService = new GetFruitByReferenceService($this->fruitRepository);
         $checkFruitReferenceAvailabilityService = new CheckFruitReferenceAvailabilityService($this->fruitRepository);
@@ -233,7 +233,7 @@ class SaveBasketTest extends TestCase
             $existingBasket->orderElements()[0]->reference()->value(),
             10
         );
-        $command->basketId = 'azeaze';
+        $command->basketId = 'amaze';
 
         $handler = $this->createSaveBasketHandler();
 
@@ -246,7 +246,7 @@ class SaveBasketTest extends TestCase
      * @throws NotAvailableInStockFruitReferenceException
      * @throws NotFoundFruitReferenceException
      */
-    public function test_can_throw_order_element_not_found_exception()
+    public function test_can_throw_order_element_not_found_in_basket_exception()
     {
         $orderElement = new OrderElement(
             reference: new FruitReference('Ref02'),
@@ -311,8 +311,9 @@ class SaveBasketTest extends TestCase
      */
     public function test_can_throw_fruit_reference_not_available_in_stock_exception_when_ordered_not_available_in_stock_element()
     {
+        $notAvailableFruitReference = 'Ref03';
         $command = new SaveBasketCommand(
-            'Ref03',
+            $notAvailableFruitReference,
             5
         );
 
@@ -329,10 +330,11 @@ class SaveBasketTest extends TestCase
      */
     public function test_can_throw_fruit_reference_not_available_in_stock_exception_when_ordered_more_than_quantity_in_stock()
     {
+        $quantityGreaterThanQuantityInStock = 35;
         $existingBasket = $this->buildBasketSUT();
         $command = new SaveBasketCommand(
             $existingBasket->orderElements()[0]->reference()->value(),
-            35
+            $quantityGreaterThanQuantityInStock
         );
         $fruitsByReferenceInStock = $this->fruitRepository->allByReference($existingBasket->orderElements()[0]->reference());
         $this->assertTrue($command->orderedQuantity > count($fruitsByReferenceInStock));
@@ -349,8 +351,9 @@ class SaveBasketTest extends TestCase
      */
     public function test_can_throw_fruit_reference_not_found_exception()
     {
+        $notFoundFruitReference = 'Ref10';
         $command = new SaveBasketCommand(
-            fruitRef: 'Ref10',
+            fruitRef: $notFoundFruitReference,
             orderedQuantity: 10,
         );
 
@@ -366,7 +369,7 @@ class SaveBasketTest extends TestCase
      * @throws NotFoundOrderElementException
      * @throws NotAvailableInStockFruitReferenceException
      */
-    public function test_can_throw_invalid_argument_exception_with_not_give_the_quantity()
+    public function test_can_throw_invalid_argument_exception_when_not_give_the_quantity_in_case_different_from_the_remove()
     {
         $existingBasket = $this->buildBasketSUT();
         $command = new SaveBasketCommand($existingBasket->orderElements()[0]->reference()->value());

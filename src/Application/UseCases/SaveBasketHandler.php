@@ -6,7 +6,6 @@ use App\Application\Commands\SaveBasketCommand;
 use App\Application\Entities\Basket\Basket;
 use App\Application\Entities\Basket\BasketRepository;
 use App\Application\Enums\BasketAction;
-use App\Application\Exceptions\InvalidCommandException;
 use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
@@ -18,6 +17,7 @@ use App\Application\ValueObjects\FruitReference;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderedQuantity;
 use App\Application\ValueObjects\OrderElement;
+use InvalidArgumentException;
 
 readonly class SaveBasketHandler
 {
@@ -83,17 +83,17 @@ readonly class SaveBasketHandler
     {
         if ($action === BasketAction::ADD_TO_BASKET) {
             if (is_null($orderedQuantity->value())) {
-                throw new \InvalidArgumentException("Impossible d'ajouter sans préciser la quantité !");
+                throw new InvalidArgumentException("Impossible d'ajouter sans préciser la quantité !");
             }
         }
     }
 
     /**
-     * @param Id|null $orderId
+     * @param Id $orderId
      * @return Basket
      * @throws NotFoundBasketException
      */
-    private function getBasketOrThrowNotFoundException(?Id $orderId): Basket
+    private function getBasketOrThrowNotFoundException(Id $orderId): Basket
     {
         $order = $this->repository->byId($orderId);
         if (!$order) {
