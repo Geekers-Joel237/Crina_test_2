@@ -27,7 +27,7 @@ readonly class CheckFruitReferenceAvailabilityService
             throw new NotAvailableInStockFruitReferenceException("Ce fruit n'est plus disponible en stock !");
         }
 
-        if ($orderElement->orderedQuantity()->value() >= (count($fruitsByReference) - $this->MINIMAL_ACCEPTABLE_QUANTITY)) {
+        if ($orderElement->orderedQuantity()?->value() >= (count($fruitsByReference) - $this->MINIMAL_ACCEPTABLE_QUANTITY)) {
             throw new NotAvailableInStockFruitReferenceException("La quantité demandée pour ce fruit n'est plus disponible en stock !");
         }
     }

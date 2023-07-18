@@ -22,7 +22,6 @@ use App\Application\ValueObjects\OrderedQuantity;
 use App\Application\ValueObjects\OrderElement;
 use App\Persistence\Repositories\Fruit\InMemoryFruitRepository;
 use App\Persistence\Repositories\Basket\InMemoryBasketRepository;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class SaveBasketTest extends TestCase
@@ -49,8 +48,9 @@ class SaveBasketTest extends TestCase
     {
         //Given
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::ADD_TO_BASKET->value,
             5
         );
 
@@ -104,8 +104,9 @@ class SaveBasketTest extends TestCase
     public function test_can_add_element_to_basket()
     {
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::ADD_TO_BASKET->value,
             10
         );
         $command->basketId = $existingBasket->id()->value();
@@ -127,8 +128,9 @@ class SaveBasketTest extends TestCase
     public function test_can_update_basket_where_add_already_present_element()
     {
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::ADD_TO_BASKET->value,
             15
         );
         $command->basketId = $existingBasket->id()->value();
@@ -156,8 +158,9 @@ class SaveBasketTest extends TestCase
     public function test_can_destroy_basket_while_removing_last_element_from_existing_basket()
     {
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand(
-            $existingBasket->orderElements()[0]->reference()->value()
+        $command = SaveBasketCommand::create(
+            $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::REMOVE_FROM_BASKET->value
         );
         $command->basketId = $existingBasket->id()->value();
         $command->action = BasketAction::REMOVE_FROM_BASKET->value;
@@ -180,8 +183,9 @@ class SaveBasketTest extends TestCase
     public function test_can_remove_order_element_from_existing_basket()
     {
         $basketWithManyOrderElements = $this->buildBasketWithManyOrderElements();
-        $command = new SaveBasketCommand(
-            fruitRef: $basketWithManyOrderElements->orderElements()[0]->reference()->value()
+        $command = SaveBasketCommand::create(
+            fruitRef: $basketWithManyOrderElements->orderElements()[0]->reference()->value(),
+            action: BasketAction::REMOVE_FROM_BASKET->value
         );
 
         $command->basketId = $basketWithManyOrderElements->id()->value();
@@ -229,8 +233,9 @@ class SaveBasketTest extends TestCase
     public function test_can_throw_basket_not_found_exception()
     {
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::ADD_TO_BASKET->value,
             10
         );
         $command->basketId = 'amaze';
@@ -255,8 +260,9 @@ class SaveBasketTest extends TestCase
 
         $existingBasket = $this->buildBasketSUT();
 
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $orderElement->reference()->value(),
+            BasketAction::REMOVE_FROM_BASKET->value,
             1
         );
         $command->basketId = $existingBasket->id()->value();
@@ -276,7 +282,7 @@ class SaveBasketTest extends TestCase
      */
     public function test_can_throw_invalid_command_exception_with_invalid_fruit_ref()
     {
-        $command = new SaveBasketCommand('', 5);
+        $command = SaveBasketCommand::create('', BasketAction::ADD_TO_BASKET->value, 5);
 
         $handler = $this->createSaveBasketHandler();
 
@@ -293,8 +299,9 @@ class SaveBasketTest extends TestCase
     public function test_can_throw_invalid_command_exception_with_invalid_ordered_quantity()
     {
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::ADD_TO_BASKET->value,
             -5
         );
 
@@ -312,8 +319,9 @@ class SaveBasketTest extends TestCase
     public function test_can_throw_fruit_reference_not_available_in_stock_exception_when_ordered_not_available_in_stock_element()
     {
         $notAvailableFruitReference = 'Ref03';
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $notAvailableFruitReference,
+            BasketAction::ADD_TO_BASKET->value,
             5
         );
 
@@ -332,8 +340,9 @@ class SaveBasketTest extends TestCase
     {
         $quantityGreaterThanQuantityInStock = 35;
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::ADD_TO_BASKET->value,
             $quantityGreaterThanQuantityInStock
         );
         $fruitsByReferenceInStock = $this->fruitRepository->allByReference($existingBasket->orderElements()[0]->reference());
@@ -352,9 +361,10 @@ class SaveBasketTest extends TestCase
     public function test_can_throw_fruit_reference_not_found_exception()
     {
         $notFoundFruitReference = 'Ref10';
-        $command = new SaveBasketCommand(
+        $command = SaveBasketCommand::create(
             fruitRef: $notFoundFruitReference,
-            orderedQuantity: 10,
+            action: BasketAction::ADD_TO_BASKET->value,
+            orderedQuantity: 10
         );
 
         $handler = $this->createSaveBasketHandler();
@@ -369,13 +379,16 @@ class SaveBasketTest extends TestCase
      * @throws NotFoundOrderElementException
      * @throws NotAvailableInStockFruitReferenceException
      */
-    public function test_can_throw_invalid_argument_exception_when_not_give_the_quantity_in_case_different_from_the_remove()
+    public function test_can_throw_invalid_command_exception_when_not_give_the_quantity_in_case_different_from_the_remove()
     {
         $existingBasket = $this->buildBasketSUT();
-        $command = new SaveBasketCommand($existingBasket->orderElements()[0]->reference()->value());
+        $this->expectException(InvalidCommandException::class);
+        $command =  SaveBasketCommand::create(
+            $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::ADD_TO_BASKET->value
+        );
 
         $handler = $this->createSaveBasketHandler();
-        $this->expectException(InvalidArgumentException::class);
         $handler->handle($command);
     }
 

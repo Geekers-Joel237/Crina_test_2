@@ -4,10 +4,10 @@ namespace App\Application\ValueObjects;
 
 use App\Application\Exceptions\InvalidCommandException;
 
- class OrderedQuantity
+class OrderedQuantity
 {
 
-    public function __construct(private ?int $value)
+    public function __construct(private int $value)
     {
         $this->validate();
     }
@@ -18,12 +18,12 @@ use App\Application\Exceptions\InvalidCommandException;
      */
     private function validate(): void
     {
-        if ($this->value <= 0 and !is_null($this->value)) {
+        if ($this->value <= 0) {
             throw new InvalidCommandException("La quantité de fruits doit être supérieure à 0 !");
         }
     }
 
-    public function value(): ?int
+    public function value(): int
     {
         return $this->value;
     }
