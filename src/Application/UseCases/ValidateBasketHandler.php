@@ -69,7 +69,7 @@ readonly class ValidateBasketHandler
      * @throws NotFoundBasketException
      */
     private
-    function getBasketOrThrowNotFoundException(?Id $basketId): Basket
+    function getBasketOrThrowNotFoundException(Id $basketId): Basket
     {
         $basket = $this->basketRepository->byId($basketId);
         if (!$basket) {

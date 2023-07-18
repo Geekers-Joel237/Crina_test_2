@@ -3,6 +3,7 @@
 namespace Tests\Units\Basket;
 
 use App\Application\Commands\ValidateBasketCommand;
+use App\Application\Entities\Basket\Basket;
 use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Basket\BasketRepository;
 use App\Application\Entities\Order\OrderRepository;
@@ -34,8 +35,7 @@ class ValidateBasketTest extends TestCase
      */
     public function test_can_validate_basket()
     {
-        $basket = BasketSUT::asBuilder()->build();
-        $this->basketRepository->save($basket);
+        $basket = $this->buildBasketSUT();
 
         $existingAvailableFruitsBeforeOrder = $this->fruitRepository->allByReference(
             $basket->orderElements()[0]->reference()
@@ -59,6 +59,34 @@ class ValidateBasketTest extends TestCase
             $basket->orderElements()[0]->reference()
         );
 
+        $this->assertTrue($response->isValidated);
+        $this->assertNotNull($response->orderId);
+        $this->assertCount(
+            count($existingAvailableFruitsBeforeOrder) -
+            $existingBasket->orderElements()[0]->orderedQuantity()->value(),
+            $remainingAvailableFruitsAfterOrder);
+    }
+
+    /**
+     * @throws NotFoundBasketException
+     */
+    public function test_can_create_order()
+    {
+        $basket = $this->buildBasketSUT();
+
+        $command = new ValidateBasketCommand(
+            basketId: $basket->id()->value(),
+            currency: 1,
+            meanPayment: 1
+        );
+
+        $handler = new ValidateBasketHandler(
+            $this->basketRepository,
+            $this->fruitRepository,
+            $this->orderRepository,
+        );
+        $response = $handler->handle($command);
+
 
         $this->assertTrue($response->isValidated);
         $this->assertNotNull($response->orderId);
@@ -67,15 +95,11 @@ class ValidateBasketTest extends TestCase
         $this->assertNotNull($order->discount());
         $this->assertNotNull($order->currency());
         $this->assertNotNull($order->meanPayment());
+        $this->assertNotNull($order->paymentDate());
+        $this->assertEquals($response->orderId, $order->id()->value());
         $this->assertEquals($basket->id()->value(), $order->basketId()->value());
 
-
-        $this->assertCount(
-            count($existingAvailableFruitsBeforeOrder) -
-            $existingBasket->orderElements()[0]->orderedQuantity()->value(),
-            $remainingAvailableFruitsAfterOrder);
     }
-
     /**
      * @throws NotFoundBasketException
      */
@@ -142,4 +166,11 @@ class ValidateBasketTest extends TestCase
         $handler->handle($command);
     }
 
+    private function buildBasketSUT(): Basket
+    {
+        $basket = BasketSUT::asBuilder()->build();
+        $this->basketRepository->save($basket);
+
+        return $basket;
+    }
 }

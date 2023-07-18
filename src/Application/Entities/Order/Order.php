@@ -60,4 +60,8 @@ class Order
         return $this->discount;
     }
 
+    public function paymentDate(): DateVo
+    {
+        return $this->paymentDate;
+    }
 }
