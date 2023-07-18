@@ -22,6 +22,7 @@ use App\Application\ValueObjects\OrderedQuantity;
 use App\Application\ValueObjects\OrderElement;
 use App\Persistence\Repositories\Fruit\InMemoryFruitRepository;
 use App\Persistence\Repositories\Basket\InMemoryBasketRepository;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class SaveBasketTest extends TestCase
@@ -287,6 +288,22 @@ class SaveBasketTest extends TestCase
         $handler = $this->createSaveBasketHandler();
 
         $this->expectException(InvalidCommandException::class);
+        $handler->handle($command);
+    }
+
+    /**
+     * @throws NotFoundBasketException
+     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderElementException
+     * @throws NotAvailableInStockFruitReferenceException
+     */
+    public function test_can_throw_invalid_command_exception_with_invalid_action()
+    {
+        $invalidAction = 8;
+        $this->expectException(InvalidArgumentException::class);
+        $command = SaveBasketCommand::create('Ref01',$invalidAction);
+
+        $handler = $this->createSaveBasketHandler();
         $handler->handle($command);
     }
 
