@@ -56,7 +56,7 @@ readonly class ValidateBasketHandler
             basketId: $basketId,
             currency: $currency,
             meanPayment: $meanPayment,
-            discount: new Discount($discount)
+            discount: $discount
         );
         $response->orderId = $order->id()->value();
 
@@ -89,10 +89,10 @@ readonly class ValidateBasketHandler
 
     /**
      * @param OrderElement[] $orderElements
-     * @return float
+     * @return Discount
      */
     private
-    function getDiscountFromBasket(array $orderElements): float
+    function getDiscountFromBasket(array $orderElements): Discount
     {
         $firstLevelToGetDiscount = 10;
         $secondLevelToGetDiscount = 20;
@@ -110,7 +110,7 @@ readonly class ValidateBasketHandler
      * @return int
      */
     public
-    function getTotalOrderedQuantity(array $orderElements): mixed
+    function getTotalOrderedQuantity(array $orderElements): int
     {
         $orderQuantity = 0;
         foreach ($orderElements as $element) {
@@ -125,7 +125,7 @@ readonly class ValidateBasketHandler
      * @param int $firstDiscountApply
      * @param int $secondLevelToGetDiscount
      * @param int $secondDiscountApply
-     * @return float
+     * @return Discount
      */
     public
     function getDiscount(
@@ -133,35 +133,18 @@ readonly class ValidateBasketHandler
         int $firstLevelToGetDiscount,
         int $firstDiscountApply,
         int $secondLevelToGetDiscount,
-        int $secondDiscountApply): float
+        int $secondDiscountApply): Discount
     {
-        $discount = 0;
+        $discount = new Discount(0);
         if ($orderQuantity > $firstLevelToGetDiscount) {
-            $discount = $firstDiscountApply;
-            $discount = $this->getSecondDiscount($orderQuantity, $secondLevelToGetDiscount, $secondDiscountApply, $discount);
+            $discount->add($firstDiscountApply);
+            if ($orderQuantity > $secondLevelToGetDiscount) {
+                $discount->add($secondDiscountApply);
+            }
         }
         return $discount;
     }
 
-    /**
-     * @param int $orderQuantity
-     * @param int $secondLevelToGetDiscount
-     * @param int $secondDiscountApply
-     * @param int $discount
-     * @return int
-     */
-    public
-    function getSecondDiscount(
-        int $orderQuantity,
-        int $secondLevelToGetDiscount,
-        int $secondDiscountApply,
-        int $discount): int
-    {
-        if ($orderQuantity > $secondLevelToGetDiscount) {
-            $discount += $secondDiscountApply;
-        }
-        return $discount;
-    }
 
     /**
      * @param OrderElement[] $orderElements
