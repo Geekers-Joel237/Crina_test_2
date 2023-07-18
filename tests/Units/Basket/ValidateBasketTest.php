@@ -7,6 +7,8 @@ use App\Application\Entities\Basket\Basket;
 use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Basket\BasketRepository;
 use App\Application\Entities\Order\OrderRepository;
+use App\Application\Enums\Currency;
+use App\Application\Enums\MeanPayment;
 use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\UseCases\ValidateBasketHandler;
 use App\Application\ValueObjects\Id;
@@ -92,12 +94,14 @@ class ValidateBasketTest extends TestCase
         $this->assertNotNull($response->orderId);
 
         $order = $this->orderRepository->byId(new Id($response->orderId));
+
+        $this->assertEquals(Currency::XAF,$order->currency());
+        $this->assertEquals(MeanPayment::MOMO,$order->meanPayment());
         $this->assertNotNull($order->discount());
-        $this->assertNotNull($order->currency());
-        $this->assertNotNull($order->meanPayment());
+        $this->assertNotNull($order->amount());
         $this->assertNotNull($order->paymentDate());
         $this->assertEquals($response->orderId, $order->id()->value());
-        $this->assertEquals($basket->id()->value(), $order->basketId()->value());
+        $this->assertEquals($order->basketId()->value(), $basket->id()->value());
 
     }
     /**

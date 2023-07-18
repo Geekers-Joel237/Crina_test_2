@@ -14,6 +14,7 @@ use App\Application\Enums\MeanPayment;
 use App\Application\Enums\BasketStatus;
 use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\Responses\ValidateBasketResponse;
+use App\Application\ValueObjects\Amount;
 use App\Application\ValueObjects\Discount;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderElement;
@@ -42,10 +43,10 @@ readonly class ValidateBasketHandler
         $currency = Currency::in($command->currency());
         $meanPayment = MeanPayment::in($command->meanPayment());
 
-        $basket = $this->getBasketOrThrowNotFoundException(new Id($command->basketId()));
+        $basket = $this->getBasketOrThrowNotFoundException($basketId);
         $this->checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException($basket->orderElements());
 
-        $discount = $this->getDiscountFromBasket($basket->orderElements());
+
         $this->decreaseStockWithIncomingBasket($basket->orderElements());
         $basket->setIsValidated();
 
@@ -53,10 +54,9 @@ readonly class ValidateBasketHandler
             $response->isValidated = true;
         }
         $order = Order::create(
-            basketId: $basketId,
+            basket: $basket,
             currency: $currency,
-            meanPayment: $meanPayment,
-            discount: $discount
+            meanPayment: $meanPayment
         );
         $response->orderId = $order->id()->value();
 
@@ -86,65 +86,6 @@ readonly class ValidateBasketHandler
     function checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException(array $orderElements): void
     {
     }
-
-    /**
-     * @param OrderElement[] $orderElements
-     * @return Discount
-     */
-    private
-    function getDiscountFromBasket(array $orderElements): Discount
-    {
-        $firstLevelToGetDiscount = 10;
-        $secondLevelToGetDiscount = 20;
-        $firstDiscountApply = 10;
-        $secondDiscountApply = 15;
-
-        $orderQuantity = $this->getTotalOrderedQuantity($orderElements);
-        return $this->getDiscount($orderQuantity, $firstLevelToGetDiscount, $firstDiscountApply,
-            $secondLevelToGetDiscount, $secondDiscountApply
-        );
-    }
-
-    /**
-     * @param array $orderElements
-     * @return int
-     */
-    public
-    function getTotalOrderedQuantity(array $orderElements): int
-    {
-        $orderQuantity = 0;
-        foreach ($orderElements as $element) {
-            $orderQuantity += $element->orderedQuantity()->value();
-        }
-        return $orderQuantity;
-    }
-
-    /**
-     * @param int $orderQuantity
-     * @param int $firstLevelToGetDiscount
-     * @param int $firstDiscountApply
-     * @param int $secondLevelToGetDiscount
-     * @param int $secondDiscountApply
-     * @return Discount
-     */
-    public
-    function getDiscount(
-        int $orderQuantity,
-        int $firstLevelToGetDiscount,
-        int $firstDiscountApply,
-        int $secondLevelToGetDiscount,
-        int $secondDiscountApply): Discount
-    {
-        $discount = new Discount(0);
-        if ($orderQuantity > $firstLevelToGetDiscount) {
-            $discount->add($firstDiscountApply);
-            if ($orderQuantity > $secondLevelToGetDiscount) {
-                $discount->add($secondDiscountApply);
-            }
-        }
-        return $discount;
-    }
-
 
     /**
      * @param OrderElement[] $orderElements

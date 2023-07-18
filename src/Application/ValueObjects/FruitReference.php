@@ -4,16 +4,18 @@ namespace App\Application\ValueObjects;
 
 use App\Application\Exceptions\InvalidCommandException;
 
-readonly class FruitReference
+class FruitReference
 {
+    private float $unitPrice;
 
     /**
      * @param string $value
      * @throws InvalidCommandException
      */
-    public function __construct(private string $value)
+    public function __construct(private readonly string $value)
     {
         $this->validate();
+        $this->unitPrice = 500.0;
     }
 
     /**
@@ -30,5 +32,15 @@ readonly class FruitReference
     public function value(): string
     {
         return $this->value;
+    }
+
+    public function unitPrice(): float
+    {
+        return $this->unitPrice;
+    }
+
+    public function changeUnitPrice(float $price): void
+    {
+        $this->unitPrice = $price;
     }
 }
