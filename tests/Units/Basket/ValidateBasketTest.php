@@ -81,8 +81,9 @@ class ValidateBasketTest extends TestCase
      */
     public function test_can_throw_basket_not_found_exception()
     {
+        $invalidBasketId = 'azerty';
         $command = new ValidateBasketCommand(
-            basketId: 'azerty',
+            basketId: $invalidBasketId,
             currency: 1,
             meanPayment: 1
         );
@@ -102,9 +103,10 @@ class ValidateBasketTest extends TestCase
      */
     public function test_can_throw_invalid_argument_exception_with_invalid_currency()
     {
+        $invalidCurrency = 5;
         $command = new ValidateBasketCommand(
             basketId: '001',
-            currency: 5,
+            currency: $invalidCurrency,
             meanPayment: 1
         );
 
@@ -123,10 +125,11 @@ class ValidateBasketTest extends TestCase
      */
     public function test_can_throw_invalid_argument_exception_with_invalid_payment()
     {
+        $invalidMeanPayment = 5;
         $command = new ValidateBasketCommand(
             basketId: '001',
             currency: 1,
-            meanPayment: 5
+            meanPayment: $invalidMeanPayment
         );
 
         $handler = new ValidateBasketHandler(
@@ -138,4 +141,5 @@ class ValidateBasketTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $handler->handle($command);
     }
+
 }

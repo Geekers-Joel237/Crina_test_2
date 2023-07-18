@@ -297,7 +297,7 @@ class SaveBasketTest extends TestCase
      * @throws NotFoundOrderElementException
      * @throws NotAvailableInStockFruitReferenceException
      */
-    public function test_can_throw_invalid_command_exception_with_invalid_action()
+    public function test_can_throw_invalid_argument_exception_with_invalid_action()
     {
         $invalidAction = 8;
         $this->expectException(InvalidArgumentException::class);
