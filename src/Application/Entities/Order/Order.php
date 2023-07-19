@@ -4,7 +4,7 @@ namespace App\Application\Entities\Order;
 
 use App\Application\Entities\Basket\Basket;
 use App\Application\Enums\Currency;
-use App\Application\Enums\MeanPayment;
+use App\Application\Enums\PaymentMethod;
 use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\ValueObjects\Amount;
 use App\Application\ValueObjects\DateVo;
@@ -19,10 +19,10 @@ class Order
     private ?Amount $amount;
 
     private function __construct(
-        private readonly Id          $id,
-        private readonly Id          $basketId,
-        private readonly Currency    $currency,
-        private readonly MeanPayment $meanPayment,
+        private readonly Id            $id,
+        private readonly Id            $basketId,
+        private readonly Currency      $currency,
+        private readonly PaymentMethod $meanPayment,
     )
     {
         $this->paymentDate = null;
@@ -31,12 +31,12 @@ class Order
     }
 
     public static function create(
-        Basket      $basket,
-        Currency    $currency,
-        MeanPayment $meanPayment,
+        Basket        $basket,
+        Currency      $currency,
+        PaymentMethod $paymentMethod,
     ): self
     {
-        $self = new self(new Id(time()), $basket->id(), $currency, $meanPayment);
+        $self = new self(new Id(time()), $basket->id(), $currency, $paymentMethod);
 
         $self->discount = self::getDiscountFromBasket($basket->orderElements());
         $self->amount = self::getFinalAmountToBuy($self->discount, $basket->orderElements());
@@ -61,7 +61,7 @@ class Order
         return $this->currency;
     }
 
-    public function meanPayment(): MeanPayment
+    public function meanPayment(): PaymentMethod
     {
         return $this->meanPayment;
     }

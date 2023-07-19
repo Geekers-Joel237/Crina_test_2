@@ -45,7 +45,7 @@ class SaveBasketCommand
 
     private function validate(): void
     {
-        if ($this->action === BasketAction::ADD_TO_BASKET->value) {
+        if ($this->action !== BasketAction::REMOVE_FROM_BASKET->value) {
             if (!$this->orderedQuantity) {
                 throw new InvalidCommandException("Impossible d'ajouter sans préciser la quantité !");
             }

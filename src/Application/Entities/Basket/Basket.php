@@ -80,7 +80,7 @@ class Basket
     {
         if ($action === BasketAction::ADD_TO_BASKET) {
             if ($this->checkIfOrderElementExist($orderElement)) {
-                $this->changeElementQuantityInBasket($orderElement);
+                $this->increaseElementQuantityInBasket($orderElement);
                 return;
             }
             $this->addElementToBasket($orderElement);
@@ -88,6 +88,10 @@ class Basket
         }
 
         $this->checkIfOrderElementAlreadyExistInBasketOrThrowNotFoundOrderElementException($orderElement);
+        if ($action === BasketAction::MODIFY_THE_QUANTITY){
+            $this->changeElementQuantityInBasket($orderElement);
+            return;
+        }
         $this->removeElementFromBasket($orderElement);
     }
 
@@ -104,7 +108,7 @@ class Basket
         return false;
     }
 
-    private function changeElementQuantityInBasket(OrderElement $orderElement): void
+    private function increaseElementQuantityInBasket(OrderElement $orderElement): void
     {
         $existingOrderElement =
             array_filter(
@@ -146,6 +150,21 @@ class Basket
     public function setIsValidated(): void
     {
         $this->status = BasketStatus::IS_VALIDATED;
+    }
+
+    private function changeElementQuantityInBasket(OrderElement $orderElement): void
+    {
+        $existingOrderElement =
+            array_filter(
+                $this->orderElements,
+                fn(OrderElement $element) => $element->reference()->value() === $orderElement->reference()->value()
+            );
+        $key = key($existingOrderElement);
+        $existingOrderElement[0]->orderedQuantity()->changeQuantity(
+            $orderElement->orderedQuantity()->value() -
+            $existingOrderElement[0]->orderedQuantity()->value()
+        );
+        $this->orderElements[$key] = $existingOrderElement[0];
     }
 
 

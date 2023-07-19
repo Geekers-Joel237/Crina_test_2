@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Application\UseCases;
+namespace App\Application\UseCases\Basket;
 
 use App\Application\Commands\SaveBasketCommand;
 use App\Application\Entities\Basket\Basket;
 use App\Application\Entities\Basket\BasketRepository;
 use App\Application\Enums\BasketAction;
 use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
+use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
-use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\Responses\SaveBasketResponse;
 use App\Application\Services\CheckFruitReferenceAvailabilityService;
 use App\Application\Services\GetFruitByReferenceService;

@@ -3,25 +3,25 @@
 namespace Tests\Units\Basket;
 
 use App\Application\Commands\SaveBasketCommand;
-use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Basket\Basket;
 use App\Application\Entities\Basket\BasketRepository;
+use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Enums\BasketAction;
 use App\Application\Enums\BasketStatus;
 use App\Application\Exceptions\InvalidCommandException;
+use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
+use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\Exceptions\NotFoundFruitReferenceException;
 use App\Application\Exceptions\NotFoundOrderElementException;
-use App\Application\Exceptions\NotFoundBasketException;
-use App\Application\Exceptions\NotAvailableInStockFruitReferenceException;
 use App\Application\Services\CheckFruitReferenceAvailabilityService;
 use App\Application\Services\GetFruitByReferenceService;
-use App\Application\UseCases\SaveBasketHandler;
+use App\Application\UseCases\Basket\SaveBasketHandler;
 use App\Application\ValueObjects\FruitReference;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderedQuantity;
 use App\Application\ValueObjects\OrderElement;
-use App\Persistence\Repositories\Fruit\InMemoryFruitRepository;
 use App\Persistence\Repositories\Basket\InMemoryBasketRepository;
+use App\Persistence\Repositories\Fruit\InMemoryFruitRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
@@ -65,36 +65,6 @@ class SaveBasketTest extends TestCase
         $this->assertEquals(BasketStatus::IS_SAVED->value, $response->basketStatus);
     }
 
-    private function buildBasketSUT(): Basket
-    {
-        $orderElement = new OrderElement(
-            reference: new FruitReference('Ref01'),
-            orderedQuantity: new OrderedQuantity(10)
-        );
-        $existingBasket = Basket::create(
-            orderElement: $orderElement,
-            id: new Id('001')
-        );
-
-        $this->basketRepository->save($existingBasket);
-
-        return $existingBasket;
-    }
-
-    /**
-     * @return SaveBasketHandler
-     */
-    private function createSaveBasketHandler(): SaveBasketHandler
-    {
-        $getFruitByReferenceService = new GetFruitByReferenceService($this->fruitRepository);
-        $checkFruitReferenceAvailabilityService = new CheckFruitReferenceAvailabilityService($this->fruitRepository);
-
-        return new SaveBasketHandler(
-            $this->basketRepository,
-            $getFruitByReferenceService,
-            $checkFruitReferenceAvailabilityService
-        );
-    }
 
     /**
      * @throws NotAvailableInStockFruitReferenceException
@@ -126,7 +96,7 @@ class SaveBasketTest extends TestCase
      * @throws NotFoundBasketException
      * @throws NotFoundOrderElementException
      */
-    public function test_can_update_basket_where_add_already_present_element()
+    public function test_can_update_basket_where_element_to_add_exist()
     {
         $existingBasket = $this->buildBasketSUT();
         $command = SaveBasketCommand::create(
@@ -156,7 +126,7 @@ class SaveBasketTest extends TestCase
      * @throws NotFoundBasketException
      * @throws NotFoundOrderElementException
      */
-    public function test_can_destroy_basket_while_removing_last_element_from_existing_basket()
+    public function test_can_destroy_basket_when_last_element_is_removed()
     {
         $existingBasket = $this->buildBasketSUT();
         $command = SaveBasketCommand::create(
@@ -203,28 +173,7 @@ class SaveBasketTest extends TestCase
         $this->assertTrue(count($retrieveOrder->orderElements()) === $orderElementsBeforeOrder - 1);
     }
 
-    /**
-     * @throws NotFoundOrderElementException
-     */
-    private function buildBasketWithManyOrderElements(): Basket
-    {
 
-        $orderElement1 = new OrderElement(
-            reference: new FruitReference('Ref02'),
-            orderedQuantity: new OrderedQuantity(2)
-        );
-        $orderElement2 = new OrderElement(
-            reference: new FruitReference('Ref03'),
-            orderedQuantity: new OrderedQuantity(1)
-        );
-        $orderWithManyOrderElements = BasketSUT::asBuilder()
-            ->withOtherElement($orderElement1)
-            ->withOtherElement($orderElement2)
-            ->build();
-        $this->basketRepository->save($orderWithManyOrderElements);
-
-        return $orderWithManyOrderElements;
-    }
 
     /**
      * @throws NotFoundOrderElementException
@@ -396,17 +345,149 @@ class SaveBasketTest extends TestCase
      * @throws NotFoundOrderElementException
      * @throws NotAvailableInStockFruitReferenceException
      */
-    public function test_can_throw_invalid_command_exception_when_not_give_the_quantity_in_case_different_from_the_remove()
+    public function test_can_throw_invalid_command_exception_when_not_give_the_quantity_in_case_add_to_basket()
     {
         $existingBasket = $this->buildBasketSUT();
         $this->expectException(InvalidCommandException::class);
-        $command =  SaveBasketCommand::create(
+        SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
             BasketAction::ADD_TO_BASKET->value
         );
+    }
+
+    public function test_can_throw_invalid_command_exception_when_not_give_the_quantity_in_case_modify_quantity_to_basket()
+    {
+        $existingBasket = $this->buildBasketSUT();
+        $this->expectException(InvalidCommandException::class);
+        SaveBasketCommand::create(
+            $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::MODIFY_THE_QUANTITY->value
+        );
+    }
+
+    /**
+     * @throws NotFoundBasketException
+     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderElementException
+     * @throws NotAvailableInStockFruitReferenceException
+     */
+    public function test_can_modify_the_quantity_of_fruit_in_the_basket()
+    {
+        $existingBasket = $this->buildBasketSUT();
+        $newQuantity = 5;
+        $command = SaveBasketCommand::create(
+            $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::MODIFY_THE_QUANTITY->value,
+            $newQuantity
+        );
+        $command->basketId = $existingBasket->id()->value();
 
         $handler = $this->createSaveBasketHandler();
+        $response = $handler->handle($command);
+        $basket = $this->basketRepository->byId($existingBasket->id());
+        self::assertTrue($response->isSaved);
+        self::assertEquals(BasketStatus::IS_SAVED->value,$response->basketStatus);
+        self::assertEquals($newQuantity,$basket->orderElements()[0]->orderedQuantity()->value());
+
+    }
+
+    /**
+     * @throws NotFoundBasketException
+     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderElementException
+     * @throws NotAvailableInStockFruitReferenceException
+     */
+    public function test_can_throw_not_found_order_element_when_modify_the_quantity()
+    {
+        $existingBasket = $this->buildBasketSUT();
+        $referenceNotExistingInTheBasket = 'Ref02';
+        $command = SaveBasketCommand::create(
+            $referenceNotExistingInTheBasket,
+            BasketAction::MODIFY_THE_QUANTITY->value,
+            1
+        );
+        $command->basketId = $existingBasket->id()->value();
+
+        $handler = $this->createSaveBasketHandler();
+        $this->expectException(NotFoundOrderElementException::class);
         $handler->handle($command);
+    }
+
+    /**
+     * @throws NotFoundBasketException
+     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundOrderElementException
+     * @throws NotAvailableInStockFruitReferenceException
+     */
+    public function test_can_throw_not_available_quantity_in_stock_when_modify_the_quantity()
+    {
+        $existingBasket = $this->buildBasketSUT();
+        $quantityNotAvailableInStock = 35;
+        $command = SaveBasketCommand::create(
+            $existingBasket->orderElements()[0]->reference()->value(),
+            BasketAction::REMOVE_FROM_BASKET->value,
+            $quantityNotAvailableInStock
+        );
+
+        $handler = $this->createSaveBasketHandler();
+        $this->expectException(NotAvailableInStockFruitReferenceException::class);
+        $this->expectExceptionMessage("La quantité demandée pour ce fruit n'est plus disponible en stock !");
+        $handler->handle($command);
+    }
+
+
+    private function buildBasketSUT(): Basket
+    {
+        $orderElement = new OrderElement(
+            reference: new FruitReference('Ref01'),
+            orderedQuantity: new OrderedQuantity(10)
+        );
+        $existingBasket = Basket::create(
+            orderElement: $orderElement,
+            id: new Id('001')
+        );
+
+        $this->basketRepository->save($existingBasket);
+
+        return $existingBasket;
+    }
+
+    /**
+     * @return SaveBasketHandler
+     */
+    private function createSaveBasketHandler(): SaveBasketHandler
+    {
+        $getFruitByReferenceService = new GetFruitByReferenceService($this->fruitRepository);
+        $checkFruitReferenceAvailabilityService = new CheckFruitReferenceAvailabilityService($this->fruitRepository);
+
+        return new SaveBasketHandler(
+            $this->basketRepository,
+            $getFruitByReferenceService,
+            $checkFruitReferenceAvailabilityService
+        );
+    }
+
+    /**
+     * @throws NotFoundOrderElementException
+     */
+    private function buildBasketWithManyOrderElements(): Basket
+    {
+
+        $orderElement1 = new OrderElement(
+            reference: new FruitReference('Ref02'),
+            orderedQuantity: new OrderedQuantity(2)
+        );
+        $orderElement2 = new OrderElement(
+            reference: new FruitReference('Ref03'),
+            orderedQuantity: new OrderedQuantity(1)
+        );
+        $orderWithManyOrderElements = BasketSUT::asBuilder()
+            ->withOtherElement($orderElement1)
+            ->withOtherElement($orderElement2)
+            ->build();
+        $this->basketRepository->save($orderWithManyOrderElements);
+
+        return $orderWithManyOrderElements;
     }
 
 }

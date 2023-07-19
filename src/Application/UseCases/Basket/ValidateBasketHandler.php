@@ -1,21 +1,19 @@
 <?php
 
-namespace App\Application\UseCases;
+namespace App\Application\UseCases\Basket;
 
 use App\Application\Commands\ValidateBasketCommand;
-use App\Application\Entities\Fruit\Fruit;
-use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Basket\Basket;
 use App\Application\Entities\Basket\BasketRepository;
+use App\Application\Entities\Fruit\Fruit;
+use App\Application\Entities\Fruit\FruitRepository;
 use App\Application\Entities\Order\Order;
 use App\Application\Entities\Order\OrderRepository;
-use App\Application\Enums\Currency;
-use App\Application\Enums\MeanPayment;
 use App\Application\Enums\BasketStatus;
+use App\Application\Enums\Currency;
+use App\Application\Enums\PaymentMethod;
 use App\Application\Exceptions\NotFoundBasketException;
 use App\Application\Responses\ValidateBasketResponse;
-use App\Application\ValueObjects\Amount;
-use App\Application\ValueObjects\Discount;
 use App\Application\ValueObjects\Id;
 use App\Application\ValueObjects\OrderElement;
 
@@ -25,8 +23,8 @@ readonly class ValidateBasketHandler
 
     public function __construct(
         private BasketRepository $basketRepository,
-        private FruitRepository  $fruitRepository,
-        private OrderRepository  $orderRepository,
+        private FruitRepository $fruitRepository,
+        private OrderRepository $orderRepository,
 
     )
     {
@@ -35,17 +33,14 @@ readonly class ValidateBasketHandler
     /**
      * @throws NotFoundBasketException
      */
-    public
-    function handle(ValidateBasketCommand $command): ValidateBasketResponse
+    public function handle(ValidateBasketCommand $command): ValidateBasketResponse
     {
         $response = new ValidateBasketResponse();
         $basketId = new Id($command->basketId());
         $currency = Currency::in($command->currency());
-        $meanPayment = MeanPayment::in($command->meanPayment());
+        $paymentMethod = PaymentMethod::in($command->paymentMethod());
 
         $basket = $this->getBasketOrThrowNotFoundException($basketId);
-        $this->checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException($basket->orderElements());
-
 
         $this->decreaseStockWithIncomingBasket($basket->orderElements());
         $basket->setIsValidated();
@@ -56,7 +51,7 @@ readonly class ValidateBasketHandler
         $order = Order::create(
             basket: $basket,
             currency: $currency,
-            meanPayment: $meanPayment
+            paymentMethod: $paymentMethod
         );
         $response->orderId = $order->id()->value();
 
@@ -68,8 +63,7 @@ readonly class ValidateBasketHandler
     /**
      * @throws NotFoundBasketException
      */
-    private
-    function getBasketOrThrowNotFoundException(Id $basketId): Basket
+    private function getBasketOrThrowNotFoundException(Id $basketId): Basket
     {
         $basket = $this->basketRepository->byId($basketId);
         if (!$basket) {
@@ -78,21 +72,12 @@ readonly class ValidateBasketHandler
         return $basket;
     }
 
-    /**
-     * @param OrderElement[] $orderElements
-     * @return void
-     */
-    private
-    function checkAvailabilityOfOrderElementsOrThrowNotAvailableFruitReferenceException(array $orderElements): void
-    {
-    }
 
     /**
      * @param OrderElement[] $orderElements
      * @return void
      */
-    private
-    function decreaseStockWithIncomingBasket(array $orderElements): void
+    private function decreaseStockWithIncomingBasket(array $orderElements): void
     {
         foreach ($orderElements as $orderElement) {
             $this->removeOrderElementInStock($orderElement);
@@ -104,8 +89,7 @@ readonly class ValidateBasketHandler
      * @param OrderElement $orderElement
      * @return void
      */
-    private
-    function removeOrderElementInStock(OrderElement $orderElement): void
+    private function removeOrderElementInStock(OrderElement $orderElement): void
     {
         $fruitsToRemove = array_slice(
             $this->fruitRepository->allByReference($orderElement->reference()),
@@ -121,8 +105,7 @@ readonly class ValidateBasketHandler
      * @param Fruit[] $fruitsToRemove
      * @return array
      */
-    private
-    function setFruitsToRemoveHasBusy(array $fruitsToRemove): array
+    private function setFruitsToRemoveHasBusy(array $fruitsToRemove): array
     {
         foreach ($fruitsToRemove as $fruit) {
             $fruit->setHasBusy();

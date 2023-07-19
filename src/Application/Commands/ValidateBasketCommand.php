@@ -6,8 +6,8 @@ readonly class ValidateBasketCommand
 {
     public function __construct(
         private string $basketId,
-        private int   $currency,
-        private int   $meanPayment,
+        private int    $currency,
+        private int    $paymentMethod,
 
     )
     {
@@ -23,8 +23,8 @@ readonly class ValidateBasketCommand
         return $this->currency;
     }
 
-    public function meanPayment(): int
+    public function paymentMethod(): int
     {
-        return $this->meanPayment;
+        return $this->paymentMethod;
     }
 }

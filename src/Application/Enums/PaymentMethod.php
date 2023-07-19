@@ -2,9 +2,9 @@
 
 namespace App\Application\Enums;
 
-enum MeanPayment: int
+enum PaymentMethod: int
 {
-    case MOMO = 1;
+    case MTN_MONEY = 1;
     case OM = 2;
     case CARD = 3;
 
