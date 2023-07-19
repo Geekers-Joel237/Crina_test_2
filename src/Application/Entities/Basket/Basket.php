@@ -27,16 +27,32 @@ class Basket
         $this->orderElements = [];
     }
 
+    /**
+     * @throws NotFoundOrderElementException
+     */
     public static function create(
         OrderElement $orderElement,
-        ?Id          $id = null
+        BasketAction $action,
+        ?Basket      $existingBasket = null,
+        ?Id          $id = null,
+
     ): self
     {
-        $self = new self($id ?? new Id(time()));
-        $self->addElementToBasket($orderElement);
-        $self->changeStatus(BasketStatus::IS_SAVED);
 
-        return $self;
+        $self = new self($id ?: new Id(time()));
+
+        if (!$id){
+            $self->addElementToBasket($orderElement);
+            $self->changeStatus(BasketStatus::IS_SAVED);
+            return $self;
+        }
+        if ($existingBasket){
+            return $existingBasket->updateBasket($orderElement,$action);
+        }
+
+        $actualBasket = $self->updateBasket($orderElement, $action);
+        $self->changeStatus(BasketStatus::IS_SAVED);
+        return $self->mergeBasket($existingBasket,$actualBasket);
     }
 
     private function addElementToBasket(OrderElement $orderElement): void
@@ -76,23 +92,24 @@ class Basket
     public function updateBasket(
         OrderElement $orderElement,
         BasketAction $action
-    ): void
+    ): Basket
     {
         if ($action === BasketAction::ADD_TO_BASKET) {
             if ($this->checkIfOrderElementExist($orderElement)) {
                 $this->increaseElementQuantityInBasket($orderElement);
-                return;
+                return $this;
             }
             $this->addElementToBasket($orderElement);
-            return;
+            return $this;
         }
 
         $this->checkIfOrderElementAlreadyExistInBasketOrThrowNotFoundOrderElementException($orderElement);
         if ($action === BasketAction::MODIFY_THE_QUANTITY){
             $this->changeElementQuantityInBasket($orderElement);
-            return;
+            return $this;
         }
         $this->removeElementFromBasket($orderElement);
+        return $this;
     }
 
     private function checkIfOrderElementExist(OrderElement $orderElement): bool
@@ -116,8 +133,8 @@ class Basket
                 fn(OrderElement $element) => $element->reference()->value() === $orderElement->reference()->value()
             );
         $key = key($existingOrderElement);
-        $existingOrderElement[0]->orderedQuantity()->changeQuantity($orderElement->orderedQuantity()->value());
-        $this->orderElements[$key] = $existingOrderElement[0];
+        $existingOrderElement[$key]?->orderedQuantity()->changeQuantity($orderElement->orderedQuantity()->value());
+        $this->orderElements[$key] = $existingOrderElement[$key];
     }
 
     /**
@@ -165,6 +182,21 @@ class Basket
             $existingOrderElement[0]->orderedQuantity()->value()
         );
         $this->orderElements[$key] = $existingOrderElement[0];
+    }
+
+    private function mergeBasket(?Basket $existingBasket, Basket $actualBasket): self
+    {
+        if (!$existingBasket){
+            return $this;
+        }
+        $orderElement = $actualBasket->orderElements()[0];
+        if ($existingBasket->checkIfOrderElementExist($orderElement)) {
+            $existingBasket->increaseElementQuantityInBasket($orderElement);
+            return $existingBasket;
+        }
+        $actualBasket->orderElements = array_merge($existingBasket->orderElements(),$actualBasket->orderElements());
+        $actualBasket->status = $existingBasket->status;
+        return $actualBasket;
     }
 
 

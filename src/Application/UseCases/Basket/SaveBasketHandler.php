@@ -52,17 +52,15 @@ readonly class SaveBasketHandler
         );
         $this->verifyIfFruitReferenceIsAvailableInStockOrThrowNotAvailableInStockException->execute($orderElement);
 
-        if (!$basketId) {
-            $basket = Basket::create(
-                orderElement: $orderElement,
-                id: $basketId
-            );
-        } else {
-            $action = BasketAction::in($command->action);
-            $basket = $this->getBasketOrThrowNotFoundException($basketId);
-            $basket->updateBasket($orderElement, $action);
-        }
+        $existingBasket = $this->getBasketOrThrowNotFoundException($basketId);
+        $action = BasketAction::in($command->action);
 
+        $basket = Basket::create(
+            orderElement: $orderElement,
+            action: $action,
+            existingBasket: $existingBasket,
+            id: $basketId
+        );
         $this->repository->save($basket);
 
         $response->isSaved = true;
@@ -74,12 +72,15 @@ readonly class SaveBasketHandler
 
 
     /**
-     * @param Id $orderId
-     * @return Basket
+     * @param Id|null $orderId
+     * @return Basket|null
      * @throws NotFoundBasketException
      */
-    private function getBasketOrThrowNotFoundException(Id $orderId): Basket
+    private function getBasketOrThrowNotFoundException(?Id $orderId): ?Basket
     {
+        if (!$orderId){
+            return null;
+        }
         $order = $this->repository->byId($orderId);
         if (!$order) {
             throw new NotFoundBasketException("Cette commande n'existe pas !");

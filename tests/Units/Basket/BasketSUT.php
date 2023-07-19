@@ -13,6 +13,9 @@ class BasketSUT
 {
     private Basket $basket;
 
+    /**
+     * @throws NotFoundOrderElementException
+     */
     public static function asBuilder(): self
     {
         $orderElement = new OrderElement(
@@ -22,7 +25,8 @@ class BasketSUT
 
         $self = new self();
         $self->basket = Basket::create(
-            $orderElement
+            $orderElement,
+            BasketAction::ADD_TO_BASKET
         );
         return $self;
     }

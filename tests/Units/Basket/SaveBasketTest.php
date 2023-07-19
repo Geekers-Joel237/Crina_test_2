@@ -78,7 +78,7 @@ class SaveBasketTest extends TestCase
         $command = SaveBasketCommand::create(
             $existingBasket->orderElements()[0]->reference()->value(),
             BasketAction::ADD_TO_BASKET->value,
-            10
+            1
         );
         $command->basketId = $existingBasket->id()->value();
 
@@ -199,7 +199,7 @@ class SaveBasketTest extends TestCase
     /**
      * @throws NotFoundBasketException
      * @throws NotAvailableInStockFruitReferenceException
-     * @throws NotFoundFruitReferenceException
+     * @throws NotFoundFruitReferenceException|NotFoundOrderElementException
      */
     public function test_can_throw_order_element_not_found_in_basket_exception()
     {
@@ -248,9 +248,10 @@ class SaveBasketTest extends TestCase
      */
     public function test_can_throw_invalid_argument_exception_with_invalid_action()
     {
+        $existingBasket = $this->buildBasketSUT();
         $invalidAction = 8;
         $this->expectException(InvalidArgumentException::class);
-        $command = SaveBasketCommand::create('Ref01',$invalidAction);
+        $command = SaveBasketCommand::create($existingBasket->orderElements()[0]->reference()->value(),$invalidAction);
 
         $handler = $this->createSaveBasketHandler();
         $handler->handle($command);
@@ -339,12 +340,7 @@ class SaveBasketTest extends TestCase
         $handler->handle($command);
     }
 
-    /**
-     * @throws NotFoundBasketException
-     * @throws NotFoundFruitReferenceException
-     * @throws NotFoundOrderElementException
-     * @throws NotAvailableInStockFruitReferenceException
-     */
+
     public function test_can_throw_invalid_command_exception_when_not_give_the_quantity_in_case_add_to_basket()
     {
         $existingBasket = $this->buildBasketSUT();
@@ -436,6 +432,9 @@ class SaveBasketTest extends TestCase
     }
 
 
+    /**
+     * @throws NotFoundOrderElementException
+     */
     private function buildBasketSUT(): Basket
     {
         $orderElement = new OrderElement(
@@ -444,6 +443,7 @@ class SaveBasketTest extends TestCase
         );
         $existingBasket = Basket::create(
             orderElement: $orderElement,
+            action: BasketAction::ADD_TO_BASKET,
             id: new Id('001')
         );
 
