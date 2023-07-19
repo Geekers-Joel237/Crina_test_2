@@ -50,9 +50,9 @@ class Basket
             return $existingBasket->updateBasket($orderElement,$action);
         }
 
-        $actualBasket = $self->updateBasket($orderElement, $action);
+        $self->updateBasket($orderElement, $action)->changeStatus(BasketStatus::IS_SAVED);
         $self->changeStatus(BasketStatus::IS_SAVED);
-        return $self->mergeBasket($existingBasket,$actualBasket);
+        return $self;
     }
 
     private function addElementToBasket(OrderElement $orderElement): void
