@@ -43,20 +43,21 @@ readonly class ValidateBasketHandler
         $basket = $this->getBasketOrThrowNotFoundException($basketId);
 
         $this->decreaseStockWithIncomingBasket($basket->orderElements());
-        $basket->setIsValidated();
 
-        if (BasketStatus::IS_VALIDATED->value === $basket->status()->value) {
-            $response->isValidated = true;
-        }
         $order = Order::create(
             basket: $basket,
             currency: $currency,
             paymentMethod: $paymentMethod
         );
+
+        $basket->setIsValidated();
+        if (BasketStatus::IS_VALIDATED->value === $basket->status()->value) {
+            $response->isValidated = true;
+        }
+
         $response->orderId = $order->id()->value();
-
-
         $this->orderRepository->save($order);
+
         return $response;
     }
 
@@ -96,7 +97,7 @@ readonly class ValidateBasketHandler
             0,
             $orderElement->orderedQuantity()->value()
         );
-        $fruitsToRemove = $this->setFruitsToRemoveHasBusy($fruitsToRemove);
+        //$fruitsToRemove = $this->setFruitsToRemoveHasBusy($fruitsToRemove);
         $this->setFruitsHasSold($fruitsToRemove);
 
     }

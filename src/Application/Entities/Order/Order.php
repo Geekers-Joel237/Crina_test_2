@@ -36,6 +36,7 @@ class Order
         PaymentMethod $paymentMethod,
     ): self
     {
+
         $self = new self(new Id(time()), $basket->id(), $currency, $paymentMethod);
 
         $self->discount = self::getDiscountFromBasket($basket->orderElements());
@@ -49,6 +50,7 @@ class Order
     {
         return $this->id;
     }
+
 
 
     public function basketId(): Id
